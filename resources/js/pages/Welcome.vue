@@ -1,35 +1,53 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
+import ProductCard from '@/components/ProductCard.vue'
 
 defineOptions({ layout: AppLayout })
+
+const props = defineProps<{
+    featuredProducts: {
+        slug: string
+        name: string
+        brand: string
+        image: string
+        price: number | null
+        sale_price: number | null
+        size_label: string | null
+        badge: string | null
+    }[]
+    brands: { name: string; logo: string | null }[]
+}>()
 
 const categories = [
     {
         label: 'Muški parfemi',
         image: '/assets/img/pexels-diun-group-1148420145-21234956.webp',
-        href: '#',
+        href: '/parfemi',
     },
     {
         label: 'Ženski parfemi',
         image: '/assets/img/pexels-laurachouette-22589353.webp',
-        href: '#',
+        href: '/parfemi',
     },
     {
         label: 'Uniseks / Pokloni',
         image: '/assets/img/pexels-rehman-yousaf-321165099-14490634.webp',
-        href: '#',
+        href: '/parfemi',
     },
 ]
 
-const brands = [
-    { name: 'Chanel', logo: '/assets/img/brands/chanel.svg' },
-    { name: 'Dolce & Gabbana', logo: '/assets/img/brands/dolce-and-gabbana.svg' },
-    { name: 'Giorgio Armani', logo: '/assets/img/brands/giorgio-armani.svg' },
-    { name: 'Mancera', logo: '/assets/img/brands/Mancera.svg' },
-    { name: 'Versace', logo: '/assets/img/brands/versace.svg' },
-    { name: 'Yves Saint Laurent', logo: '/assets/img/brands/yves-saint-laurent.svg' },
-]
+function formatPrice(price: number | null): string {
+    if (!price) return ''
+    return new Intl.NumberFormat('sr-RS').format(price) + ' RSD'
+}
+
+function getOriginalPrice(product: typeof props.featuredProducts[0]): string | undefined {
+    if (product.sale_price && product.price) {
+        return formatPrice(product.price)
+    }
+    return undefined
+}
 </script>
 
 <template>
@@ -60,7 +78,7 @@ const brands = [
                 </p>
                 <div class="mt-10">
                     <a
-                        href="#"
+                        href="/parfemi"
                         class="inline-block border border-white/30 bg-white/10 px-10 py-4 text-sm font-medium tracking-[0.2em] text-white uppercase backdrop-blur-sm transition-all hover:border-white hover:bg-white hover:text-gray-900"
                     >
                         Pogledaj kolekciju
@@ -70,63 +88,94 @@ const brands = [
         </div>
     </section>
 
-    <!-- Shop by Category -->
-    <section class="mx-auto max-w-7xl px-6 pt-20 pb-10 lg:px-8">
-        <h2 class="mb-12 text-center font-serif text-3xl font-medium tracking-wide text-gray-900 lg:text-4xl">
-            Kupuj po kategoriji
-        </h2>
-        <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <a
-                v-for="category in categories"
-                :key="category.label"
-                :href="category.href"
-                class="group relative aspect-[4/5] overflow-hidden"
-            >
-                <img
-                    :src="category.image"
-                    :alt="category.label"
-                    class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+    <!-- Featured Products -->
+    <section class="bg-gray-50">
+        <div class="mx-auto max-w-7xl px-6 py-24 lg:px-8">
+            <h2 class="mb-12 text-center font-serif text-3xl font-medium tracking-wide text-gray-900 lg:text-4xl">
+                Istaknuti proizvodi
+            </h2>
+            <div class="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4">
+                <ProductCard
+                    v-for="product in featuredProducts"
+                    :key="product.slug"
+                    :image="product.image"
+                    :brand="product.brand"
+                    :name="product.name + (product.size_label ? ' ' + product.size_label : '')"
+                    :price="formatPrice(product.sale_price ?? product.price)"
+                    :original-price="getOriginalPrice(product)"
+                    :href="`/parfemi/${product.slug}`"
+                    :badge="product.badge ?? undefined"
                 />
-                <div class="absolute inset-0 bg-black/30 transition-colors group-hover:bg-black/40" />
-                <div class="absolute inset-0 flex items-center justify-center">
-                    <h3 class="text-2xl font-medium tracking-widest text-white uppercase">
-                        {{ category.label }}
-                    </h3>
-                </div>
-            </a>
+            </div>
         </div>
     </section>
 
     <!-- Brands -->
-    <section class="bg-gray-50 overflow-hidden">
-        <div class="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-            <div class="relative flex overflow-hidden">
-                <div class="flex shrink-0 animate-marquee items-center gap-16">
+    <section class="relative overflow-hidden">
+        <div class="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-white to-transparent sm:w-32" />
+        <div class="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-white to-transparent sm:w-32" />
+
+        <div class="mx-auto max-w-7xl px-6 py-24 lg:px-8">
+            <div class="flex overflow-hidden">
+                <div class="flex shrink-0 animate-marquee items-center gap-28 will-change-transform mr-28">
                     <div
                         v-for="brand in brands"
                         :key="brand.name"
                         class="flex shrink-0 items-center justify-center px-4"
                     >
                         <img
+                            v-if="brand.logo"
                             :src="brand.logo"
                             :alt="brand.name"
-                            class="h-16 max-w-[180px] opacity-60 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0"
+                            class="h-20 max-w-[220px] opacity-60 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0"
                         />
+                        <span v-else class="font-serif text-xl font-medium text-gray-900">{{ brand.name }}</span>
                     </div>
                 </div>
-                <div class="flex shrink-0 animate-marquee items-center gap-16" aria-hidden="true">
+                <div class="flex shrink-0 animate-marquee items-center gap-28 will-change-transform" aria-hidden="true">
                     <div
                         v-for="brand in brands"
-                        :key="brand.name"
+                        :key="`${brand.name}-dup`"
                         class="flex shrink-0 items-center justify-center px-4"
                     >
                         <img
+                            v-if="brand.logo"
                             :src="brand.logo"
                             :alt="brand.name"
-                            class="h-16 max-w-[180px] opacity-60 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0"
+                            class="h-20 max-w-[220px] opacity-60 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0"
                         />
+                        <span v-else class="font-serif text-xl font-medium text-gray-900">{{ brand.name }}</span>
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Shop by Category -->
+    <section class="bg-gray-50">
+        <div class="mx-auto max-w-7xl px-6 py-24 lg:px-8">
+            <h2 class="mb-12 text-center font-serif text-3xl font-medium tracking-wide text-gray-900 lg:text-4xl">
+                Kupuj po kategoriji
+            </h2>
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+                <a
+                    v-for="category in categories"
+                    :key="category.label"
+                    :href="category.href"
+                    class="group relative aspect-[4/5] overflow-hidden"
+                >
+                    <img
+                        :src="category.image"
+                        :alt="category.label"
+                        class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <div class="absolute inset-0 bg-black/30 transition-colors group-hover:bg-black/40" />
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <h3 class="text-2xl font-medium tracking-widest text-white uppercase">
+                            {{ category.label }}
+                        </h3>
+                    </div>
+                </a>
             </div>
         </div>
     </section>
@@ -154,10 +203,10 @@ const brands = [
                     </p>
                     <div class="mt-10">
                         <a
-                            href="#"
+                            href="/parfemi"
                             class="inline-block border border-gray-900 bg-gray-900 px-10 py-4 text-sm font-medium tracking-[0.2em] text-white uppercase transition-all hover:bg-white hover:text-gray-900"
                         >
-                            Saznaj više o nama
+                            Pogledaj kolekciju
                         </a>
                     </div>
                 </div>
@@ -218,6 +267,6 @@ const brands = [
 }
 
 .animate-marquee {
-    animation: marquee 25s linear infinite;
+    animation: marquee 30s linear infinite;
 }
 </style>
