@@ -1,4 +1,5 @@
 import type { InertiaLinkProps } from '@inertiajs/vue3'
+import contact from '@/routes/contact'
 import products from '@/routes/products'
 import brands from '@/routes/brands'
 
@@ -56,5 +57,5 @@ export const navLinks: NavLink[] = [
         ],
     },
     { label: 'Brendovi', href: brands.index.url() },
-    { label: 'Kontakt', href: '#' },
+    { label: 'Kontakt', href: contact.create.url() },
 ]

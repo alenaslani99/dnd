@@ -45,32 +45,12 @@ const selectedSort = computed({
     set: () => applyFilters(),
 })
 
-function toggleBrand(slug: string) {
-    const idx = selectedBrands.value.indexOf(slug)
+function toggleFilter(list: string[], value: string) {
+    const idx = list.indexOf(value)
     if (idx > -1) {
-        selectedBrands.value.splice(idx, 1)
+        list.splice(idx, 1)
     } else {
-        selectedBrands.value.push(slug)
-    }
-    applyFilters()
-}
-
-function toggleSize(size: string) {
-    const idx = selectedSizes.value.indexOf(size)
-    if (idx > -1) {
-        selectedSizes.value.splice(idx, 1)
-    } else {
-        selectedSizes.value.push(size)
-    }
-    applyFilters()
-}
-
-function toggleGender(gender: string) {
-    const idx = selectedGenders.value.indexOf(gender)
-    if (idx > -1) {
-        selectedGenders.value.splice(idx, 1)
-    } else {
-        selectedGenders.value.push(gender)
+        list.push(value)
     }
     applyFilters()
 }
@@ -104,11 +84,6 @@ const activeFiltersCount = computed(() => {
     if (selectedSort.value !== 'newest') count++
     return count
 })
-
-function getBadge(product: ProductListItem): string | undefined {
-    if (product.sale_price) return 'Akcija'
-    return undefined
-}
 
 const sortOptions = [
     { value: 'newest', label: 'Najnovije' },
@@ -199,7 +174,7 @@ const sortOptions = [
                                 ? 'border-gray-900 bg-gray-900 text-white'
                                 : 'border-gray-200 bg-white text-gray-700 hover:border-gray-900'
                             "
-                            @click="toggleBrand(brand.slug)"
+                            @click="toggleFilter(selectedBrands, brand.slug)"
                         >
                             {{ brand.name }}
                         </button>
@@ -221,7 +196,7 @@ const sortOptions = [
                                 ? 'border-gray-900 bg-gray-900 text-white'
                                 : 'border-gray-200 bg-white text-gray-700 hover:border-gray-900'
                             "
-                            @click="toggleSize(size)"
+                            @click="toggleFilter(selectedSizes, size)"
                         >
                             {{ size }}
                         </button>
@@ -243,7 +218,7 @@ const sortOptions = [
                                 ? 'border-gray-900 bg-gray-900 text-white'
                                 : 'border-gray-200 bg-white text-gray-700 hover:border-gray-900'
                             "
-                            @click="toggleGender(gender.value)"
+                            @click="toggleFilter(selectedGenders, gender.value)"
                         >
                             {{ gender.label }}
                         </button>
@@ -273,7 +248,7 @@ const sortOptions = [
                 :price="formatPrice(product.sale_price ?? product.price)"
                 :original-price="product.sale_price ? formatPrice(product.price) : undefined"
                 :href="productRoutes.show.url(product.slug)"
-                :badge="getBadge(product)"
+                :badge="product.badge ?? undefined"
             />
         </div>
 

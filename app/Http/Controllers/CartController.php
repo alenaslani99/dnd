@@ -2,74 +2,32 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\GetOrCreateCart;
 use App\Http\Requests\Cart\StoreRequest;
-use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\ProductVariant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class CartController extends Controller
 {
-    private function getOrCreateCart(): Cart
+    public function index(Request $request, GetOrCreateCart $cartAction): Response
     {
-        if (Auth::check()) {
-            $cart = Cart::where('user_id', Auth::id())
-                ->where('expires_at', '>', now())
-                ->latest()
-                ->first();
-
-            if (! $cart) {
-                $cart = Cart::create([
-                    'user_id' => Auth::id(),
-                    'session_id' => null,
-                    'expires_at' => now()->addDays(7),
-                ]);
-            }
-
-            return $cart;
-        }
-
-        $sessionId = session()->getId();
-
-        $cart = Cart::where('session_id', $sessionId)
-            ->where('expires_at', '>', now())
-            ->latest()
-            ->first();
-
-        if (! $cart) {
-            $cart = Cart::create([
-                'user_id' => null,
-                'session_id' => $sessionId,
-                'expires_at' => now()->addDays(7),
-            ]);
-        }
-
-        return $cart;
-    }
-
-    public function index(Request $request): Response
-    {
-        $cart = $this->getOrCreateCart();
+        $cart = $cartAction->getOrCreate();
         $cart->load([
             'items.productVariant.product.brand',
             'items.productVariant.product.images',
-            'items.productVariant.prices',
-            'items.productVariant.promotions',
+            'items.productVariant.latestPrice',
+            'items.productVariant.currentPromotion',
         ]);
 
         return Inertia::render('Cart/Index', [
             'cart' => [
                 'items' => $cart->items->map(function (CartItem $item) {
                     $variant = $item->productVariant;
-                    $price = $variant->prices->first();
-                    $promotion = $variant->promotions
-                        ->where('starts_at', '<=', now())
-                        ->where('ends_at', '>=', now())
-                        ->first();
+                    $unitPrice = $variant->activePrice();
 
                     return [
                         'id' => $item->id,
@@ -85,28 +43,21 @@ class CartController extends Controller
                             'brand' => $variant->product->brand->name,
                             'image' => $variant->product->images->first()?->path ?? '/assets/img/pexels-suhashanjar-36779951.webp',
                         ],
-                        'unit_price' => $promotion?->sale_price ?? $price?->amount,
-                        'total_price' => ($promotion?->sale_price ?? $price?->amount) * $item->quantity,
+                        'unit_price' => $unitPrice,
+                        'total_price' => $unitPrice * $item->quantity,
                     ];
                 }),
                 'total' => $cart->items->sum(function (CartItem $item) {
-                    $variant = $item->productVariant;
-                    $price = $variant->prices->first();
-                    $promotion = $variant->promotions
-                        ->where('starts_at', '<=', now())
-                        ->where('ends_at', '>=', now())
-                        ->first();
-
-                    return ($promotion?->sale_price ?? $price?->amount) * $item->quantity;
+                    return $item->productVariant->activePrice() * $item->quantity;
                 }),
                 'shipping_cost' => 500,
             ],
         ]);
     }
 
-    public function store(StoreRequest $request): RedirectResponse
+    public function store(StoreRequest $request, GetOrCreateCart $cartAction): RedirectResponse
     {
-        $cart = $this->getOrCreateCart();
+        $cart = $cartAction->getOrCreate();
         $variant = ProductVariant::with('product')->findOrFail($request->product_variant_id);
 
         if (! $variant->is_active || ! $variant->product->is_active) {

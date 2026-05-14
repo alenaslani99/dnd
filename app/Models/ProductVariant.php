@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ProductVariant extends Model
@@ -20,7 +21,6 @@ class ProductVariant extends Model
         'sku',
         'is_active',
         'is_available',
-        'stock_quantity',
     ];
 
     protected function casts(): array
@@ -28,7 +28,6 @@ class ProductVariant extends Model
         return [
             'is_active' => 'boolean',
             'is_available' => 'boolean',
-            'stock_quantity' => 'integer',
         ];
     }
 
@@ -49,7 +48,7 @@ class ProductVariant extends Model
 
     public function prices(): HasMany
     {
-        return $this->hasMany(Price::class)->orderBy('effective_date', 'desc');
+        return $this->hasMany(Price::class)->orderBy('created_at', 'desc');
     }
 
     public function promotions(): HasMany
@@ -57,28 +56,45 @@ class ProductVariant extends Model
         return $this->hasMany(Promotion::class);
     }
 
+    public function latestPrice(): HasOne
+    {
+        return $this->hasOne(Price::class)->latestOfMany();
+    }
+
+    public function currentPromotion(): HasOne
+    {
+        return $this->hasOne(Promotion::class)
+            ->where('starts_at', '<=', now())
+            ->where('ends_at', '>=', now());
+    }
+
     public function currentPrice(): ?Price
     {
-        if ($this->relationLoaded('prices')) {
-            return $this->prices->first();
+        if ($this->relationLoaded('latestPrice')) {
+            return $this->latestPrice;
         }
 
-        return $this->prices()->first();
+        return $this->latestPrice()->first();
     }
 
     public function activePromotion(): ?Promotion
     {
-        if ($this->relationLoaded('promotions')) {
-            return $this->promotions
-                ->where('starts_at', '<=', now())
-                ->where('ends_at', '>=', now())
-                ->first();
+        if ($this->relationLoaded('currentPromotion')) {
+            return $this->currentPromotion;
         }
 
-        return $this->promotions()
-            ->where('starts_at', '<=', now())
-            ->where('ends_at', '>=', now())
-            ->first();
+        return $this->currentPromotion()->first();
+    }
+
+    public function activePrice(): ?float
+    {
+        $promotion = $this->activePromotion();
+
+        if ($promotion) {
+            return (float) $promotion->sale_price;
+        }
+
+        return $this->currentPrice()?->amount;
     }
 
     public function scopeActive($query)

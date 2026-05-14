@@ -1,35 +1,68 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3'
+import { Head, Link, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
 import { formatPrice } from '@/lib/utils'
 import type { Order } from '@/types'
+import trackOrderRoutes from '@/routes/track-order'
 import productRoutes from '@/routes/products'
 
 defineOptions({ layout: AppLayout })
 
-defineProps<{
-    order: Order
+const props = defineProps<{
+    order: Order | null
+    searched: boolean
 }>()
+
+const form = useForm({
+    order_number: '',
+})
+
+function submit() {
+    form.post(trackOrderRoutes.store.url(), {
+        preserveScroll: true,
+    })
+}
 </script>
 
 <template>
-    <Head :title="`Porudžbina ${order.order_number}`" />
+    <Head title="Prati porudžbinu" />
 
     <section class="mx-auto max-w-2xl px-6 py-24 lg:px-8">
-        <div class="text-center">
-            <div class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
-                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-900"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-            </div>
-            <h1 class="font-serif text-3xl font-medium tracking-wide text-gray-900">
-                Hvala na porudžbini
+        <div class="mb-14 text-center">
+            <h1 class="font-serif text-4xl font-medium tracking-wide text-gray-900 lg:text-5xl">
+                Prati porudžbinu
             </h1>
-            <p class="mt-3 text-sm text-gray-500">
-                Tvoja porudžbina <span class="font-medium text-gray-900">{{ order.order_number }}</span> je uspešno primljena.
+            <p class="mt-4 text-base text-gray-500">
+                Unesi broj porudžbine da bi proverio status.
             </p>
         </div>
 
-        <div class="mt-14 border border-gray-100 bg-gray-50 p-8">
+        <!-- Search Form -->
+        <form @submit.prevent="submit" class="mx-auto max-w-md">
+            <div class="flex gap-3">
+                <input
+                    v-model="form.order_number"
+                    type="text"
+                    required
+                    placeholder="ORD-A7X2K9"
+                    maxlength="20"
+                    class="flex-1 border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
+                    :class="{ 'border-red-500': form.errors.order_number }"
+                />
+                <button
+                    type="submit"
+                    :disabled="form.processing"
+                    class="shrink-0 border border-gray-900 bg-gray-900 px-6 py-3 text-xs font-medium tracking-[0.2em] text-white uppercase transition-all hover:bg-white hover:text-gray-900 disabled:opacity-50"
+                >
+                    {{ form.processing ? 'Tražim...' : 'Traži' }}
+                </button>
+            </div>
+            <p v-if="form.errors.order_number" class="mt-2 text-xs text-red-500">{{ form.errors.order_number }}</p>
+        </form>
+
+        <!-- Order Result -->
+        <div v-if="searched && order" class="mt-16 border border-gray-100 bg-gray-50 p-8">
             <div class="flex items-center justify-between border-b border-gray-200 pb-4">
                 <span class="text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">Broj porudžbine</span>
                 <span class="text-sm font-medium text-gray-900">{{ order.order_number }}</span>
@@ -69,7 +102,17 @@ defineProps<{
             </div>
         </div>
 
-        <div class="mt-10 text-center">
+        <!-- Not Found -->
+        <div v-if="searched && !order" class="mt-16 text-center">
+            <p class="text-lg text-gray-400">
+                Porudžbina sa ovim brojem nije pronađena.
+            </p>
+            <p class="mt-2 text-sm text-gray-500">
+                Proveri da li si tačno uneo broj porudžbine.
+            </p>
+        </div>
+
+        <div class="mt-14 text-center">
             <Link
                 :href="productRoutes.index.url()"
                 class="inline-block border border-gray-900 bg-gray-900 px-10 py-4 text-sm font-medium tracking-[0.2em] text-white uppercase transition-all hover:bg-white hover:text-gray-900"

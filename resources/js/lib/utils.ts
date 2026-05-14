@@ -6,8 +6,8 @@ export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
-export function formatPrice(price: number | null): string {
-    if (!price) return '';
+export function formatPrice(price: number | null | undefined): string {
+    if (price === null || price === undefined) return '';
     return new Intl.NumberFormat('sr-RS').format(price) + ' RSD';
 }
 

@@ -27,9 +27,6 @@ class OrderItemFactory extends Factory
             'product_variant_id' => ProductVariant::factory(),
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
-            'product_name_snapshot' => fake()->words(4, true),
-            'sku_snapshot' => strtoupper(fake()->bothify('???-####')),
-            'size_label_snapshot' => fake()->randomElement(['30ml', '50ml', '100ml']),
         ];
     }
 }

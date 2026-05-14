@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
 import { navLinks } from '@/config/nav'
+import trackOrder from '@/routes/track-order'
 
 </script>
 
@@ -28,6 +29,14 @@ import { navLinks } from '@/config/nav'
                                 class="text-sm text-gray-500 transition-colors hover:text-gray-900"
                             >
                                 {{ link.label }}
+                            </Link>
+                        </li>
+                        <li>
+                            <Link
+                                :href="trackOrder.create.url()"
+                                class="text-sm text-gray-500 transition-colors hover:text-gray-900"
+                            >
+                                Prati porudžbinu
                             </Link>
                         </li>
                     </ul>

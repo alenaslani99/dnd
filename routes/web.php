@@ -5,9 +5,11 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TrackOrderController;
 use App\Http\Controllers\WelcomeController;
 use Illuminate\Support\Facades\Route;
 
@@ -32,7 +34,13 @@ Route::middleware('throttle:checkout')->group(function () {
 
 Route::get('porudzbine/{orderNumber}', [OrderController::class, 'show'])->name('orders.show');
 
-Route::middleware('guest')->group(function () {
+Route::get('prati-porudzbinu', [TrackOrderController::class, 'create'])->name('track-order.create');
+Route::post('prati-porudzbinu', [TrackOrderController::class, 'store'])->name('track-order.store');
+
+Route::get('kontakt', [ContactController::class, 'create'])->name('contact.create');
+Route::post('kontakt', [ContactController::class, 'store'])->name('contact.store');
+
+Route::middleware(['guest', 'throttle:auth'])->group(function () {
     Route::get('login', [LoginController::class, 'create'])->name('login');
     Route::post('login', [LoginController::class, 'store']);
 

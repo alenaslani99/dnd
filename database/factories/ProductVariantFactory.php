@@ -24,7 +24,6 @@ class ProductVariantFactory extends Factory
             'sku' => strtoupper(fake()->bothify('???-####')),
             'is_active' => true,
             'is_available' => true,
-            'stock_quantity' => fake()->numberBetween(5, 100),
         ];
     }
 

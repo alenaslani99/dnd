@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ProductDetailResource;
+use App\Http\Resources\ProductListResource;
 use App\Models\Brand;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -14,7 +16,7 @@ class ProductController extends Controller
     public function index(Request $request): Response
     {
         $query = Product::query()
-            ->with(['brand', 'images', 'variants.prices', 'variants.promotions'])
+            ->with(['brand', 'images', 'activeVariants.latestPrice', 'activeVariants.currentPromotion'])
             ->where('is_active', true);
 
         // Multi-brand filter
@@ -41,27 +43,16 @@ class ProductController extends Controller
 
         // Sort
         $sort = $request->input('sort', 'newest');
+        $priceSub = Product::select('amount')
+            ->from('prices')
+            ->join('product_variants', 'product_variants.id', '=', 'prices.product_variant_id')
+            ->whereColumn('product_variants.product_id', 'products.id')
+            ->orderBy('prices.created_at', 'desc')
+            ->limit(1);
+
         match ($sort) {
-            'price_asc' => $query->orderBy(
-                Product::select('amount')
-                    ->from('prices')
-                    ->join('product_variants', 'product_variants.id', '=', 'prices.product_variant_id')
-                    ->whereColumn('product_variants.product_id', 'products.id')
-                    ->where('prices.effective_date', '<=', now())
-                    ->orderBy('effective_date', 'desc')
-                    ->limit(1),
-                'asc'
-            ),
-            'price_desc' => $query->orderBy(
-                Product::select('amount')
-                    ->from('prices')
-                    ->join('product_variants', 'product_variants.id', '=', 'prices.product_variant_id')
-                    ->whereColumn('product_variants.product_id', 'products.id')
-                    ->where('prices.effective_date', '<=', now())
-                    ->orderBy('effective_date', 'desc')
-                    ->limit(1),
-                'desc'
-            ),
+            'price_asc' => $query->orderBy($priceSub, 'asc'),
+            'price_desc' => $query->orderBy($priceSub, 'desc'),
             'name_asc' => $query->orderBy('name', 'asc'),
             'name_desc' => $query->orderBy('name', 'desc'),
             default => $query->orderBy('created_at', 'desc'),
@@ -77,25 +68,7 @@ class ProductController extends Controller
             ->pluck('size_label');
 
         return Inertia::render('Products/Index', [
-            'products' => $products->through(function (Product $product) {
-                $variant = $product->variants->first();
-                $price = $variant?->prices->first();
-                $promotion = $variant?->promotions
-                    ->where('starts_at', '<=', now())
-                    ->where('ends_at', '>=', now())
-                    ->first();
-
-                return [
-                    'id' => $product->id,
-                    'slug' => $product->slug,
-                    'name' => $product->name,
-                    'brand' => $product->brand->name,
-                    'image' => $product->images->first()?->path ?? '/assets/img/pexels-suhashanjar-36779951.webp',
-                    'price' => $price?->amount,
-                    'sale_price' => $promotion?->sale_price,
-                    'size_label' => $variant?->size_label,
-                ];
-            }),
+            'products' => $products->through(fn (Product $product) => ProductListResource::make($product)->toArray($request)),
             'filters' => [
                 'brands' => $selectedBrands,
                 'sizes' => $selectedSizes,
@@ -115,40 +88,13 @@ class ProductController extends Controller
     public function show(Request $request, string $slug): Response
     {
         $product = Product::query()
-            ->with(['brand', 'images', 'variants.prices', 'variants.promotions'])
+            ->with(['brand', 'images', 'activeVariants.latestPrice', 'activeVariants.currentPromotion'])
             ->where('slug', $slug)
             ->where('is_active', true)
             ->firstOrFail();
 
         return Inertia::render('Products/Show', [
-            'product' => [
-                'id' => $product->id,
-                'slug' => $product->slug,
-                'name' => $product->name,
-                'description' => $product->description,
-                'brand' => $product->brand->name,
-                'images' => $product->images->map(fn ($img) => [
-                    'path' => $img->path,
-                    'alt' => $img->alt_text,
-                    'is_primary' => $img->is_primary,
-                ]),
-                'variants' => $product->variants->where('is_active', true)->values()->map(function ($variant) {
-                    $price = $variant->prices->first();
-                    $promotion = $variant->promotions
-                        ->where('starts_at', '<=', now())
-                        ->where('ends_at', '>=', now())
-                        ->first();
-
-                    return [
-                        'id' => $variant->id,
-                        'size_label' => $variant->size_label,
-                        'sku' => $variant->sku,
-                        'price' => $price?->amount,
-                        'sale_price' => $promotion?->sale_price,
-                        'is_available' => $variant->is_available,
-                    ];
-                }),
-            ],
+            'product' => ProductDetailResource::make($product)->toArray($request),
         ]);
     }
 }

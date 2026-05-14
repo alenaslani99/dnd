@@ -278,7 +278,6 @@ class ProductSeeder extends Seeder
                     'product_variant_id' => $variant->id,
                     'amount' => $variantData['price'],
                     'currency' => 'RSD',
-                    'effective_date' => now(),
                 ]);
 
                 if (isset($data['promotion']) && $data['promotion']['size_index'] === $index) {

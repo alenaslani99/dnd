@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3'
+import FormField from '@/components/FormField.vue'
 import { login, register, home } from '@/routes'
 
 defineOptions({ layout: null })
@@ -35,39 +36,25 @@ function submit() {
             </div>
 
             <form @submit.prevent="submit" class="space-y-8">
-                <div>
-                    <label for="email" class="mb-2 block text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">
-                        Email adresa
-                    </label>
+                <FormField label="Email adresa" :error="form.errors.email">
                     <input
-                        id="email"
                         v-model="form.email"
                         type="email"
                         required
                         class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
                         :class="{ 'border-red-500': form.errors.email }"
                     />
-                    <p v-if="form.errors.email" class="mt-2 text-xs text-red-500">
-                        {{ form.errors.email }}
-                    </p>
-                </div>
+                </FormField>
 
-                <div>
-                    <label for="password" class="mb-2 block text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">
-                        Lozinka
-                    </label>
+                <FormField label="Lozinka" :error="form.errors.password">
                     <input
-                        id="password"
                         v-model="form.password"
                         type="password"
                         required
                         class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
                         :class="{ 'border-red-500': form.errors.password }"
                     />
-                    <p v-if="form.errors.password" class="mt-2 text-xs text-red-500">
-                        {{ form.errors.password }}
-                    </p>
-                </div>
+                </FormField>
 
                 <div class="flex items-center justify-between">
                     <label class="flex items-center gap-2">

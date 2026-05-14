@@ -16,14 +16,12 @@ class Price extends Model
         'product_variant_id',
         'amount',
         'currency',
-        'effective_date',
     ];
 
     protected function casts(): array
     {
         return [
             'amount' => 'decimal:2',
-            'effective_date' => 'date',
         ];
     }
 

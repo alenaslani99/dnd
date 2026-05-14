@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\GetOrCreateCart;
 use App\Enums\OrderStatus;
 use App\Http\Requests\Checkout\StoreRequest;
-use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItem;
 use Illuminate\Http\RedirectResponse;
@@ -17,9 +17,9 @@ use Inertia\Response;
 
 class CheckoutController extends Controller
 {
-    public function create(Request $request): Response|RedirectResponse
+    public function create(Request $request, GetOrCreateCart $cartAction): Response|RedirectResponse
     {
-        $cart = $this->getCart();
+        $cart = $cartAction->find();
 
         if (! $cart || $cart->items->isEmpty()) {
             return redirect()->route('cart.index');
@@ -33,12 +33,7 @@ class CheckoutController extends Controller
 
         $items = $cart->items->map(function ($item) {
             $variant = $item->productVariant;
-            $price = $variant->prices->first();
-            $promotion = $variant->promotions
-                ->where('starts_at', '<=', now())
-                ->where('ends_at', '>=', now())
-                ->first();
-            $unitPrice = $promotion?->sale_price ?? $price?->amount ?? 0;
+            $unitPrice = $variant->activePrice() ?? 0;
 
             return [
                 'id' => $item->id,
@@ -64,9 +59,9 @@ class CheckoutController extends Controller
         ]);
     }
 
-    public function store(StoreRequest $request): RedirectResponse
+    public function store(StoreRequest $request, GetOrCreateCart $cartAction): RedirectResponse
     {
-        $cart = $this->getCart();
+        $cart = $cartAction->find();
 
         if (! $cart || $cart->items->isEmpty()) {
             return redirect()->route('cart.index');
@@ -89,20 +84,14 @@ class CheckoutController extends Controller
         $order = DB::transaction(function () use ($request, $cart) {
             $subtotal = 0;
             foreach ($cart->items as $item) {
-                $variant = $item->productVariant;
-                $price = $variant->prices->first();
-                $promotion = $variant->promotions
-                    ->where('starts_at', '<=', now())
-                    ->where('ends_at', '>=', now())
-                    ->first();
-                $subtotal += ($promotion?->sale_price ?? $price?->amount ?? 0) * $item->quantity;
+                $subtotal += ($item->productVariant->activePrice() ?? 0) * $item->quantity;
             }
 
             $shipping = 500;
 
             $order = new Order([
                 'user_id' => Auth::id(),
-                'order_number' => 'DND-'.now()->format('Ymd').'-'.Str::upper(Str::random(8)),
+                'order_number' => 'ORD-'.Str::upper(Str::random(6)),
                 'guest_email' => Auth::guest() ? $request->email : null,
                 'guest_phone' => Auth::guest() ? $request->phone : null,
                 'guest_name' => Auth::guest() ? $request->name : null,
@@ -119,20 +108,12 @@ class CheckoutController extends Controller
 
             foreach ($cart->items as $item) {
                 $variant = $item->productVariant;
-                $price = $variant->prices->first();
-                $promotion = $variant->promotions
-                    ->where('starts_at', '<=', now())
-                    ->where('ends_at', '>=', now())
-                    ->first();
-                $unitPrice = $promotion?->sale_price ?? $price?->amount ?? 0;
+                $unitPrice = $variant->activePrice() ?? 0;
 
                 $orderItem = new OrderItem([
                     'order_id' => $order->id,
                     'product_variant_id' => $variant->id,
                     'quantity' => $item->quantity,
-                    'product_name_snapshot' => $variant->product->name,
-                    'sku_snapshot' => $variant->sku,
-                    'size_label_snapshot' => $variant->size_label,
                 ]);
                 $orderItem->unit_price = $unitPrice;
                 $orderItem->save();
@@ -144,23 +125,6 @@ class CheckoutController extends Controller
             return $order;
         });
 
-        session()->put('last_order_number', $order->order_number);
-
         return redirect()->route('orders.show', $order->order_number);
-    }
-
-    private function getCart(): ?Cart
-    {
-        if (Auth::check()) {
-            return Cart::where('user_id', Auth::id())
-                ->where('expires_at', '>', now())
-                ->latest()
-                ->first();
-        }
-
-        return Cart::where('session_id', session()->getId())
-            ->where('expires_at', '>', now())
-            ->latest()
-            ->first();
     }
 }

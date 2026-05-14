@@ -2,14 +2,13 @@
 
 namespace Database\Factories;
 
-use App\Models\Price;
-use App\Models\ProductVariant;
+use App\Models\ContactSubmission;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<Price>
+ * @extends Factory<ContactSubmission>
  */
-class PriceFactory extends Factory
+class ContactSubmissionFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -19,9 +18,7 @@ class PriceFactory extends Factory
     public function definition(): array
     {
         return [
-            'product_variant_id' => ProductVariant::factory(),
-            'amount' => fake()->randomFloat(2, 3000, 25000),
-            'currency' => 'RSD',
+            //
         ];
     }
 }

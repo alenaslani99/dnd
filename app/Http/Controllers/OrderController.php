@@ -12,18 +12,12 @@ class OrderController extends Controller
 {
     public function show(Request $request, string $orderNumber): Response
     {
-        $order = Order::with(['items'])
+        $order = Order::with(['items.productVariant.product.brand'])
             ->where('order_number', $orderNumber)
             ->firstOrFail();
 
-        if (Auth::check()) {
-            if ($order->user_id !== Auth::id()) {
-                abort(403);
-            }
-        } else {
-            if ($order->user_id !== null || session('last_order_number') !== $order->order_number) {
-                abort(403);
-            }
+        if (Auth::check() && $order->user_id !== null && $order->user_id !== Auth::id()) {
+            abort(403);
         }
 
         return Inertia::render('Orders/Show', [
@@ -34,10 +28,12 @@ class OrderController extends Controller
                 'shipping_cost' => $order->shipping_cost,
                 'created_at' => $order->created_at->format('d.m.Y.'),
                 'items' => $order->items->map(function ($item) {
+                    $variant = $item->productVariant;
+
                     return [
-                        'product_name' => $item->product_name_snapshot ?? $item->productVariant?->product?->name ?? 'Proizvod',
-                        'brand_name' => $item->productVariant?->product?->brand?->name ?? '',
-                        'size_label' => $item->size_label_snapshot ?? $item->productVariant?->size_label,
+                        'product_name' => $variant?->product?->name ?? 'Proizvod',
+                        'brand_name' => $variant?->product?->brand?->name ?? '',
+                        'size_label' => $variant?->size_label,
                         'quantity' => $item->quantity,
                         'unit_price' => $item->unit_price,
                         'total_price' => $item->unit_price * $item->quantity,

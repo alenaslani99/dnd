@@ -2,7 +2,10 @@
 import { Head, useForm, usePage } from '@inertiajs/vue3'
 import { computed } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
+import FormField from '@/components/FormField.vue'
+import PhoneInput from '@/components/PhoneInput.vue'
 import { formatPrice } from '@/lib/utils'
+import { PHONE_REGEX, HOUSE_NUMBER_REGEX, ZIP_REGEX } from '@/lib/validation'
 import checkoutRoutes from '@/routes/checkout'
 
 defineOptions({ layout: AppLayout })
@@ -40,10 +43,6 @@ const form = useForm({
 function validateAndSubmit() {
     form.clearErrors()
 
-    const phonePattern = /^\+381\s?[0-9]{1,2}\s?[0-9]{6,7}$/
-    const housePattern = /^(\d{1,5}|bb)$/i
-    const zipPattern = /^\d{5}$/
-
     let hasError = false
 
     if (! authUser.value) {
@@ -55,7 +54,7 @@ function validateAndSubmit() {
             form.setError('email', 'Email adresa je obavezna.')
             hasError = true
         }
-        if (! phonePattern.test(form.phone)) {
+        if (! PHONE_REGEX.test(form.phone)) {
             form.setError('phone', 'Broj telefona mora biti u formatu +381 60 1234567.')
             hasError = true
         }
@@ -66,12 +65,12 @@ function validateAndSubmit() {
         hasError = true
     }
 
-    if (! housePattern.test(form.house_number)) {
+    if (! HOUSE_NUMBER_REGEX.test(form.house_number)) {
         form.setError('house_number', 'Kućni broj može biti do 5 cifara ili "bb".')
         hasError = true
     }
 
-    if (! zipPattern.test(form.zip)) {
+    if (! ZIP_REGEX.test(form.zip)) {
         form.setError('zip', 'Poštanski broj mora imati tačno 5 cifara.')
         hasError = true
     }
@@ -103,10 +102,7 @@ function validateAndSubmit() {
                         Lični podaci
                     </h2>
                     <div class="space-y-6">
-                        <div>
-                            <label class="mb-2 block text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">
-                                Ime i prezime
-                            </label>
+                        <FormField label="Ime i prezime" :error="form.errors.name">
                             <input
                                 v-model="form.name"
                                 type="text"
@@ -115,13 +111,9 @@ function validateAndSubmit() {
                                 class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
                                 :class="{ 'border-red-500': form.errors.name }"
                             />
-                            <p v-if="form.errors.name" class="mt-2 text-xs text-red-500">{{ form.errors.name }}</p>
-                        </div>
+                        </FormField>
                         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                            <div>
-                                <label class="mb-2 block text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">
-                                    Email
-                                </label>
+                            <FormField label="Email" :error="form.errors.email">
                                 <input
                                     v-model="form.email"
                                     type="email"
@@ -130,23 +122,10 @@ function validateAndSubmit() {
                                     class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
                                     :class="{ 'border-red-500': form.errors.email }"
                                 />
-                                <p v-if="form.errors.email" class="mt-2 text-xs text-red-500">{{ form.errors.email }}</p>
-                            </div>
-                            <div>
-                                <label class="mb-2 block text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">
-                                    Telefon
-                                </label>
-                                <input
-                                    v-model="form.phone"
-                                    type="tel"
-                                    required
-                                    maxlength="17"
-                                    pattern="\+381\s?[0-9]{1,2}\s?[0-9]{6,7}"
-                                    class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
-                                    :class="{ 'border-red-500': form.errors.phone }"
-                                />
-                                <p v-if="form.errors.phone" class="mt-2 text-xs text-red-500">{{ form.errors.phone }}</p>
-                            </div>
+                            </FormField>
+                            <FormField label="Telefon" :error="form.errors.phone">
+                                <PhoneInput v-model="form.phone" />
+                            </FormField>
                         </div>
                     </div>
                 </div>
@@ -158,65 +137,57 @@ function validateAndSubmit() {
                     <div class="space-y-6">
                         <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
                             <div class="sm:col-span-2">
-                                <label class="mb-2 block text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">
-                                    Ulica
-                                </label>
-                                <input
-                                    v-model="form.address"
-                                    type="text"
-                                    required
-                                    maxlength="255"
-                                    class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
-                                    :class="{ 'border-red-500': form.errors.address }"
-                                />
-                                <p v-if="form.errors.address" class="mt-2 text-xs text-red-500">{{ form.errors.address }}</p>
+                                <FormField label="Ulica" :error="form.errors.address">
+                                    <input
+                                        v-model="form.address"
+                                        type="text"
+                                        required
+                                        maxlength="255"
+                                        class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
+                                        :class="{ 'border-red-500': form.errors.address }"
+                                    />
+                                </FormField>
                             </div>
                             <div>
-                                <label class="mb-2 block text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">
-                                    Broj kuće
-                                </label>
-                                <input
-                                    v-model="form.house_number"
-                                    type="text"
-                                    required
-                                    maxlength="5"
-                                    pattern="(\d{1,5}|bb|BB)"
-                                    class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
-                                    :class="{ 'border-red-500': form.errors.house_number }"
-                                />
-                                <p v-if="form.errors.house_number" class="mt-2 text-xs text-red-500">{{ form.errors.house_number }}</p>
+                                <FormField label="Broj kuće" :error="form.errors.house_number">
+                                    <input
+                                        v-model="form.house_number"
+                                        type="text"
+                                        required
+                                        maxlength="5"
+                                        pattern="(\d{1,5}|bb|BB)"
+                                        class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
+                                        :class="{ 'border-red-500': form.errors.house_number }"
+                                    />
+                                </FormField>
                             </div>
                         </div>
                         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             <div>
-                                <label class="mb-2 block text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">
-                                    Poštanski broj
-                                </label>
-                                <input
-                                    v-model="form.zip"
-                                    type="text"
-                                    required
-                                    maxlength="5"
-                                    pattern="\d{5}"
-                                    inputmode="numeric"
-                                    class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
-                                    :class="{ 'border-red-500': form.errors.zip }"
-                                />
-                                <p v-if="form.errors.zip" class="mt-2 text-xs text-red-500">{{ form.errors.zip }}</p>
+                                <FormField label="Poštanski broj" :error="form.errors.zip">
+                                    <input
+                                        v-model="form.zip"
+                                        type="text"
+                                        required
+                                        maxlength="5"
+                                        pattern="\d{5}"
+                                        inputmode="numeric"
+                                        class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
+                                        :class="{ 'border-red-500': form.errors.zip }"
+                                    />
+                                </FormField>
                             </div>
                             <div>
-                                <label class="mb-2 block text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">
-                                    Grad
-                                </label>
-                                <input
-                                    v-model="form.city"
-                                    type="text"
-                                    required
-                                    maxlength="100"
-                                    class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
-                                    :class="{ 'border-red-500': form.errors.city }"
-                                />
-                                <p v-if="form.errors.city" class="mt-2 text-xs text-red-500">{{ form.errors.city }}</p>
+                                <FormField label="Grad" :error="form.errors.city">
+                                    <input
+                                        v-model="form.city"
+                                        type="text"
+                                        required
+                                        maxlength="100"
+                                        class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
+                                        :class="{ 'border-red-500': form.errors.city }"
+                                    />
+                                </FormField>
                             </div>
                         </div>
                     </div>
