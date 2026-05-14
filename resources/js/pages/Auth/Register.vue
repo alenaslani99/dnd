@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3'
+import { login, register, home } from '@/routes'
+
+defineOptions({ layout: null })
 
 const form = useForm({
     name: '',
@@ -10,7 +13,7 @@ const form = useForm({
 })
 
 function submit() {
-    form.post('/register', {
+    form.post(register.url(), {
         onFinish: () => form.reset('password', 'password_confirmation'),
     })
 }
@@ -22,7 +25,7 @@ function submit() {
     <div class="flex min-h-screen items-center justify-center bg-white px-6 py-12">
         <div class="w-full max-w-sm">
             <div class="mb-12 text-center">
-                <Link href="/" class="mb-6 inline-block font-sans text-xl font-semibold tracking-[0.25em] text-gray-900 uppercase">
+                <Link :href="home.url()" class="mb-6 inline-block font-sans text-xl font-semibold tracking-[0.25em] text-gray-900 uppercase">
                     dndparfems
                 </Link>
                 <h1 class="font-serif text-3xl font-medium tracking-wide text-gray-900">
@@ -126,7 +129,7 @@ function submit() {
 
             <p class="mt-10 text-center text-sm text-gray-500">
                 Već imaš nalog?
-                <Link href="/login" class="ml-1 font-medium text-gray-900 underline-offset-4 hover:underline">
+                <Link :href="login.url()" class="ml-1 font-medium text-gray-900 underline-offset-4 hover:underline">
                     Prijavi se
                 </Link>
             </p>

@@ -1,42 +1,15 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3'
+import { Head, Link } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
+import { formatPrice, statusLabel } from '@/lib/utils'
+import type { Order } from '@/types'
+import productRoutes from '@/routes/products'
 
 defineOptions({ layout: AppLayout })
 
 defineProps<{
-    order: {
-        order_number: string
-        status: string
-        total_amount: number
-        shipping_cost: number
-        created_at: string
-        items: {
-            product_name: string
-            brand_name: string
-            size_label: string | null
-            quantity: number
-            unit_price: number
-            total_price: number
-        }[]
-    }
+    order: Order
 }>()
-
-function formatPrice(price: number): string {
-    return new Intl.NumberFormat('sr-RS').format(price) + ' RSD'
-}
-
-function statusLabel(status: string): string {
-    const map: Record<string, string> = {
-        pending: 'Na čekanju',
-        processing: 'U obradi',
-        shipped: 'Poslato',
-        delivered: 'Dostavljeno',
-        cancelled: 'Otkazano',
-        refunded: 'Refundirano',
-    }
-    return map[status] ?? status
-}
 </script>
 
 <template>
@@ -96,12 +69,12 @@ function statusLabel(status: string): string {
         </div>
 
         <div class="mt-10 text-center">
-            <a
-                href="/parfemi"
+            <Link
+                :href="productRoutes.index.url()"
                 class="inline-block border border-gray-900 bg-gray-900 px-10 py-4 text-sm font-medium tracking-[0.2em] text-white uppercase transition-all hover:bg-white hover:text-gray-900"
             >
                 Nastavi kupovinu
-            </a>
+            </Link>
         </div>
     </section>
 </template>

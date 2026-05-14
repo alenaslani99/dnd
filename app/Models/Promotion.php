@@ -19,6 +19,22 @@ class Promotion extends Model
         'ends_at',
     ];
 
+    protected static function booted(): void
+    {
+        static::saving(function (Promotion $promotion) {
+            $maxDays = 30;
+            if ($promotion->starts_at && $promotion->ends_at) {
+                if ($promotion->ends_at->diffInDays($promotion->starts_at, false) > $maxDays) {
+                    throw new \InvalidArgumentException('Promocija ne može trajati duže od 30 dana.');
+                }
+
+                if ($promotion->ends_at->lessThanOrEqualTo($promotion->starts_at)) {
+                    throw new \InvalidArgumentException('Datum završetka mora biti posle datuma početka.');
+                }
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [

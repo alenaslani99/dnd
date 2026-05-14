@@ -33,11 +33,17 @@ class ProductController extends Controller
             });
         }
 
+        // Multi-gender filter
+        $selectedGenders = $request->collect('genders')->filter()->all();
+        if (! empty($selectedGenders)) {
+            $query->whereIn('gender', $selectedGenders);
+        }
+
         // Sort
         $sort = $request->input('sort', 'newest');
         match ($sort) {
             'price_asc' => $query->orderBy(
-                Product::selectRaw('MIN(amount)')
+                Product::select('amount')
                     ->from('prices')
                     ->join('product_variants', 'product_variants.id', '=', 'prices.product_variant_id')
                     ->whereColumn('product_variants.product_id', 'products.id')
@@ -47,7 +53,7 @@ class ProductController extends Controller
                 'asc'
             ),
             'price_desc' => $query->orderBy(
-                Product::selectRaw('MIN(amount)')
+                Product::select('amount')
                     ->from('prices')
                     ->join('product_variants', 'product_variants.id', '=', 'prices.product_variant_id')
                     ->whereColumn('product_variants.product_id', 'products.id')
@@ -61,7 +67,7 @@ class ProductController extends Controller
             default => $query->orderBy('created_at', 'desc'),
         };
 
-        $products = $query->get();
+        $products = $query->paginate(24)->withQueryString();
 
         $sizes = DB::table('product_variants')
             ->select('size_label')
@@ -71,7 +77,7 @@ class ProductController extends Controller
             ->pluck('size_label');
 
         return Inertia::render('Products/Index', [
-            'products' => $products->map(function (Product $product) {
+            'products' => $products->through(function (Product $product) {
                 $variant = $product->variants->first();
                 $price = $variant?->prices->first();
                 $promotion = $variant?->promotions
@@ -93,10 +99,16 @@ class ProductController extends Controller
             'filters' => [
                 'brands' => $selectedBrands,
                 'sizes' => $selectedSizes,
+                'genders' => $selectedGenders,
                 'sort' => $sort,
             ],
             'brands' => Brand::orderBy('name')->get(['id', 'name', 'slug']),
             'sizes' => $sizes,
+            'genders' => [
+                ['value' => 'male', 'label' => 'Muški'],
+                ['value' => 'female', 'label' => 'Ženski'],
+                ['value' => 'unisex', 'label' => 'Uniseks'],
+            ],
         ]);
     }
 
@@ -120,7 +132,7 @@ class ProductController extends Controller
                     'alt' => $img->alt_text,
                     'is_primary' => $img->is_primary,
                 ]),
-                'variants' => $product->variants->map(function ($variant) {
+                'variants' => $product->variants->where('is_active', true)->values()->map(function ($variant) {
                     $price = $variant->prices->first();
                     $promotion = $variant->promotions
                         ->where('starts_at', '<=', now())
@@ -133,6 +145,7 @@ class ProductController extends Controller
                         'sku' => $variant->sku,
                         'price' => $price?->amount,
                         'sale_price' => $promotion?->sale_price,
+                        'is_available' => $variant->is_available,
                     ];
                 }),
             ],

@@ -22,7 +22,7 @@ class OrderFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'order_number' => 'DND-'.now()->format('Ymd').'-'.Str::upper(fake()->bothify('###')),
+            'order_number' => 'DND-'.now()->format('Ymd').'-'.Str::upper(Str::random(8)),
             'status' => OrderStatus::Pending->value,
             'guest_email' => null,
             'guest_phone' => null,

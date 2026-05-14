@@ -23,6 +23,7 @@ class ProductFactory extends Factory
             'name' => fake()->words(3, true).' '.fake()->randomElement(['EDP', 'EDT', 'Parfum']),
             'description' => fake()->paragraphs(3, true),
             'type' => 'simple',
+            'gender' => fake()->randomElement(['male', 'female', 'unisex']),
             'is_active' => true,
         ];
     }

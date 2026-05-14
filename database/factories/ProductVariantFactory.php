@@ -23,6 +23,8 @@ class ProductVariantFactory extends Factory
             'size_label' => fake()->randomElement(['30ml', '50ml', '60ml', '80ml', '100ml', '150ml', '200ml']),
             'sku' => strtoupper(fake()->bothify('???-####')),
             'is_active' => true,
+            'is_available' => true,
+            'stock_quantity' => fake()->numberBetween(5, 100),
         ];
     }
 

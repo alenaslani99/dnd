@@ -17,7 +17,6 @@ class Order extends Model
     protected $fillable = [
         'user_id',
         'order_number',
-        'status',
         'guest_email',
         'guest_phone',
         'guest_name',
@@ -25,7 +24,6 @@ class Order extends Model
         'shipping_house_number',
         'shipping_zip',
         'shipping_city',
-        'total_amount',
         'shipping_cost',
         'payment_method',
     ];
@@ -72,5 +70,20 @@ class Order extends Model
     public function scopeCancelled($query)
     {
         return $query->where('status', OrderStatus::Cancelled);
+    }
+
+    public function scopeRefunded($query)
+    {
+        return $query->where('status', OrderStatus::Refunded);
+    }
+
+    public function scopeGuest($query)
+    {
+        return $query->whereNull('user_id');
+    }
+
+    public function scopeForUser($query, int $userId)
+    {
+        return $query->where('user_id', $userId);
     }
 }

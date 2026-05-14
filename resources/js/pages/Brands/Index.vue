@@ -1,17 +1,13 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3'
+import { Head, Link } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
+import type { BrandWithCount } from '@/types'
+import productRoutes from '@/routes/products'
 
 defineOptions({ layout: AppLayout })
 
 defineProps<{
-    brands: {
-        id: number
-        name: string
-        slug: string
-        logo: string | null
-        products_count: number
-    }[]
+    brands: BrandWithCount[]
 }>()
 </script>
 
@@ -29,10 +25,10 @@ defineProps<{
         </div>
 
         <div class="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
-            <a
+            <Link
                 v-for="brand in brands"
                 :key="brand.id"
-                :href="`/brendovi/${brand.slug}`"
+                :href="productRoutes.index.url({ query: { brands: [brand.slug] } })"
                 class="group flex flex-col items-center justify-center gap-6 border border-gray-100 bg-white px-8 py-14 transition-all duration-300 hover:border-gray-300 hover:shadow-sm"
             >
                 <img
@@ -47,7 +43,7 @@ defineProps<{
                 <span class="text-[11px] font-medium tracking-[0.2em] text-gray-400 uppercase transition-colors group-hover:text-gray-900">
                     {{ brand.products_count }} proizvoda
                 </span>
-            </a>
+            </Link>
         </div>
     </section>
 </template>

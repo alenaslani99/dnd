@@ -2,6 +2,8 @@
 import { Link, usePage } from '@inertiajs/vue3'
 import { computed, ref, watch } from 'vue'
 import { navLinks } from '@/config/nav'
+import { home, login, logout } from '@/routes'
+import cart from '@/routes/cart'
 
 const mobileMenuOpen = ref(false)
 const activeDropdown = ref<number | null>(null)
@@ -49,7 +51,7 @@ watch(mobileMenuOpen, (open) => {
 <template>
     <header class="sticky top-0 z-50 border-b border-gray-100 bg-white/80 backdrop-blur-md">
         <nav class="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-8">
-            <Link href="/" class="font-sans text-xl font-semibold tracking-[0.25em] text-gray-900 uppercase">
+            <Link :href="home.url()" class="font-sans text-xl font-semibold tracking-[0.25em] text-gray-900 uppercase">
                 dndparfems
             </Link>
 
@@ -81,25 +83,6 @@ watch(mobileMenuOpen, (open) => {
                         />
                     </Link>
                 </div>
-                <Link
-                    :href="authUser ? '/profile' : '/login'"
-                    :class="[
-                        'group relative font-sans text-xs font-semibold tracking-[0.15em] uppercase transition-colors',
-                        isActive('/profile') || isActive('/login')
-                            ? 'text-gray-900'
-                            : 'text-gray-500 hover:text-gray-900',
-                    ]"
-                >
-                    Profil
-                    <span
-                        :class="[
-                            'absolute -bottom-1 h-px bg-gray-900 transition-all duration-300',
-                            isActive('/profile') || isActive('/login')
-                                ? 'left-0 w-full'
-                                : 'left-1/2 w-0 group-hover:left-0 group-hover:w-full',
-                        ]"
-                    />
-                </Link>
             </div>
 
             <div class="hidden items-center gap-6 md:flex">
@@ -109,7 +92,7 @@ watch(mobileMenuOpen, (open) => {
 
                 <Link
                     v-if="!authUser"
-                    href="/login"
+                    :href="login.url()"
                     class="flex items-center text-gray-500 transition-colors hover:text-gray-900"
                     aria-label="Nalog"
                 >
@@ -130,7 +113,7 @@ watch(mobileMenuOpen, (open) => {
                             <p class="text-sm font-medium text-gray-900">{{ authUser.name }}</p>
                             <p class="text-xs text-gray-500 truncate">{{ authUser.email }}</p>
                         </div>
-                        <Link href="/logout" method="post" as="button" class="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 transition-colors">
+                        <Link :href="logout.url()" method="post" as="button" class="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
                             Odjavi se
                         </Link>
@@ -138,7 +121,7 @@ watch(mobileMenuOpen, (open) => {
                 </div>
 
                 <Link
-                    href="/korpa"
+                    :href="cart.index.url()"
                     class="text-gray-500 transition-colors hover:text-gray-900"
                     aria-label="Korpa"
                 >
@@ -223,7 +206,7 @@ watch(mobileMenuOpen, (open) => {
         >
             <div class="flex items-center justify-between">
                 <Link
-                    href="/"
+                    :href="home.url()"
                     class="font-sans text-xl font-semibold tracking-[0.25em] text-white uppercase"
                     @click="mobileMenuOpen = false"
                 >
@@ -258,28 +241,12 @@ watch(mobileMenuOpen, (open) => {
                         ]"
                     />
                 </Link>
-                <Link
-                    :href="authUser ? '/profile' : '/login'"
-                    :class="[
-                        'group relative font-sans text-4xl font-bold uppercase tracking-tight text-white transition-opacity',
-                        isActive('/profile') || isActive('/login') ? 'opacity-100' : 'opacity-60 hover:opacity-100',
-                    ]"
-                    @click="mobileMenuOpen = false"
-                >
-                    Profil
-                    <span
-                        :class="[
-                            'absolute -bottom-2 left-0 h-px bg-white transition-all duration-300',
-                            isActive('/profile') || isActive('/login') ? 'w-full' : 'w-0 group-hover:w-full',
-                        ]"
-                    />
-                </Link>
             </div>
 
             <div class="flex items-center justify-center gap-8">
                 <Link
                     v-if="!authUser"
-                    href="/login"
+                    :href="login.url()"
                     class="flex flex-col items-center gap-2 text-white/60 transition-colors hover:text-white"
                     aria-label="Nalog"
                     @click="mobileMenuOpen = false"
@@ -289,7 +256,7 @@ watch(mobileMenuOpen, (open) => {
                 </Link>
                 <Link
                     v-else
-                    href="/logout"
+                    :href="logout.url()"
                     method="post"
                     as="button"
                     class="flex flex-col items-center gap-2 text-white/60 transition-colors hover:text-white"
@@ -300,7 +267,7 @@ watch(mobileMenuOpen, (open) => {
                     <span class="text-[10px] font-medium tracking-[0.2em] uppercase">Odjavi se</span>
                 </Link>
                 <Link
-                    href="/korpa"
+                    :href="cart.index.url()"
                     class="flex flex-col items-center gap-2 text-white/60 transition-colors hover:text-white"
                     aria-label="Korpa"
                     @click="mobileMenuOpen = false"

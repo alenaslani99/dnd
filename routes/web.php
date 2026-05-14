@@ -18,13 +18,17 @@ Route::get('brendovi', [BrandController::class, 'index'])->name('brands.index');
 Route::get('parfemi', [ProductController::class, 'index'])->name('products.index');
 Route::get('parfemi/{slug}', [ProductController::class, 'show'])->name('products.show');
 
-Route::get('korpa', [CartController::class, 'index'])->name('cart.index');
-Route::post('korpa', [CartController::class, 'store'])->name('cart.store');
-Route::patch('korpa/{item}', [CartController::class, 'update'])->name('cart.update');
-Route::delete('korpa/{item}', [CartController::class, 'destroy'])->name('cart.destroy');
+Route::middleware('throttle:cart')->group(function () {
+    Route::get('korpa', [CartController::class, 'index'])->name('cart.index');
+    Route::post('korpa', [CartController::class, 'store'])->name('cart.store');
+    Route::patch('korpa/{item}', [CartController::class, 'update'])->name('cart.update');
+    Route::delete('korpa/{item}', [CartController::class, 'destroy'])->name('cart.destroy');
+});
 
-Route::get('checkout', [CheckoutController::class, 'create'])->name('checkout.create');
-Route::post('checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+Route::middleware('throttle:checkout')->group(function () {
+    Route::get('checkout', [CheckoutController::class, 'create'])->name('checkout.create');
+    Route::post('checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+});
 
 Route::get('porudzbine/{orderNumber}', [OrderController::class, 'show'])->name('orders.show');
 

@@ -18,9 +18,9 @@ class Product extends Model
     protected $fillable = [
         'brand_id',
         'name',
-        'slug',
         'description',
         'type',
+        'gender',
         'is_active',
     ];
 
@@ -31,11 +31,21 @@ class Product extends Model
         ];
     }
 
-    /**
-     * Return the sluggable configuration array for this model.
-     *
-     * @return array<string, mixed>
-     */
+    protected static function booted(): void
+    {
+        static::deleting(function (Product $product) {
+            if (! $product->isForceDeleting()) {
+                $product->variants()->delete();
+                $product->images()->delete();
+            }
+        });
+
+        static::restoring(function (Product $product) {
+            $product->variants()->restore();
+            $product->images()->restore();
+        });
+    }
+
     public function sluggable(): array
     {
         return [
@@ -53,6 +63,11 @@ class Product extends Model
     public function variants(): HasMany
     {
         return $this->hasMany(ProductVariant::class);
+    }
+
+    public function activeVariants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class)->where('is_active', true);
     }
 
     public function images(): HasMany
@@ -78,5 +93,10 @@ class Product extends Model
     public function scopeBundle($query)
     {
         return $query->where('type', 'bundle');
+    }
+
+    public function scopeGender($query, string $gender)
+    {
+        return $query->where('gender', $gender);
     }
 }

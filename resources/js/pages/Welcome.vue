@@ -1,52 +1,46 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3'
+import { Head, Link } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
 import ProductCard from '@/components/ProductCard.vue'
+import { formatPrice } from '@/lib/utils'
+import type { FeaturedProduct, Brand } from '@/types'
+import products from '@/routes/products'
 
 defineOptions({ layout: AppLayout })
 
 const props = defineProps<{
-    featuredProducts: {
-        slug: string
-        name: string
-        brand: string
-        image: string
-        price: number | null
-        sale_price: number | null
-        size_label: string | null
-        badge: string | null
-    }[]
-    brands: { name: string; logo: string | null }[]
+    featuredProducts: FeaturedProduct[]
+    brands: Brand[]
 }>()
 
 const categories = [
     {
         label: 'Muški parfemi',
         image: '/assets/img/pexels-diun-group-1148420145-21234956.webp',
-        href: '/parfemi',
+        href: products.index.url({ query: { genders: ['male'] } }),
     },
     {
         label: 'Ženski parfemi',
         image: '/assets/img/pexels-laurachouette-22589353.webp',
-        href: '/parfemi',
+        href: products.index.url({ query: { genders: ['female'] } }),
     },
     {
         label: 'Uniseks / Pokloni',
         image: '/assets/img/pexels-rehman-yousaf-321165099-14490634.webp',
-        href: '/parfemi',
+        href: products.index.url({ query: { genders: ['unisex'] } }),
     },
 ]
 
-function formatPrice(price: number | null): string {
-    if (!price) return ''
-    return new Intl.NumberFormat('sr-RS').format(price) + ' RSD'
-}
-
-function getOriginalPrice(product: typeof props.featuredProducts[0]): string | undefined {
+function getOriginalPrice(product: FeaturedProduct): string | undefined {
     if (product.sale_price && product.price) {
         return formatPrice(product.price)
     }
     return undefined
+}
+
+function submitNewsletter(event: Event) {
+    event.preventDefault()
+    alert('Newsletter prijava uskoro dostupna.')
 }
 </script>
 
@@ -77,12 +71,12 @@ function getOriginalPrice(product: typeof props.featuredProducts[0]): string | u
                     Pažljivo odabrana kolekcija luksuznih parfema koji govore više od reči.
                 </p>
                 <div class="mt-10">
-                    <a
-                        href="/parfemi"
+                    <Link
+                        :href="products.index.url()"
                         class="inline-block border border-white/30 bg-white/10 px-10 py-4 text-sm font-medium tracking-[0.2em] text-white uppercase backdrop-blur-sm transition-all hover:border-white hover:bg-white hover:text-gray-900"
                     >
                         Pogledaj kolekciju
-                    </a>
+                    </Link>
                 </div>
             </div>
         </div>
@@ -103,49 +97,46 @@ function getOriginalPrice(product: typeof props.featuredProducts[0]): string | u
                     :name="product.name + (product.size_label ? ' ' + product.size_label : '')"
                     :price="formatPrice(product.sale_price ?? product.price)"
                     :original-price="getOriginalPrice(product)"
-                    :href="`/parfemi/${product.slug}`"
+                    :href="products.show.url(product.slug)"
                     :badge="product.badge ?? undefined"
                 />
             </div>
         </div>
     </section>
 
-    <!-- Brands -->
-    <section class="relative overflow-hidden">
+    <!-- Brands Marquee -->
+    <section class="relative overflow-hidden py-24">
         <div class="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-white to-transparent sm:w-32" />
         <div class="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-white to-transparent sm:w-32" />
 
-        <div class="mx-auto max-w-7xl px-6 py-24 lg:px-8">
-            <div class="flex overflow-hidden">
-                <div class="flex shrink-0 animate-marquee items-center gap-28 will-change-transform mr-28">
-                    <div
-                        v-for="brand in brands"
-                        :key="brand.name"
-                        class="flex shrink-0 items-center justify-center px-4"
-                    >
-                        <img
-                            v-if="brand.logo"
-                            :src="brand.logo"
-                            :alt="brand.name"
-                            class="h-20 max-w-[220px] opacity-60 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0"
-                        />
-                        <span v-else class="font-serif text-xl font-medium text-gray-900">{{ brand.name }}</span>
-                    </div>
+        <div class="flex overflow-hidden">
+            <div class="flex w-max animate-marquee items-center gap-28 will-change-transform hover:[animation-play-state:paused]">
+                <div
+                    v-for="brand in brands"
+                    :key="brand.name"
+                    class="flex shrink-0 items-center justify-center px-4"
+                >
+                    <img
+                        v-if="brand.logo"
+                        :src="brand.logo"
+                        :alt="brand.name"
+                        class="h-20 max-w-[220px] opacity-60 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0"
+                    />
+                    <span v-else class="font-serif text-xl font-medium text-gray-900">{{ brand.name }}</span>
                 </div>
-                <div class="flex shrink-0 animate-marquee items-center gap-28 will-change-transform" aria-hidden="true">
-                    <div
-                        v-for="brand in brands"
-                        :key="`${brand.name}-dup`"
-                        class="flex shrink-0 items-center justify-center px-4"
-                    >
-                        <img
-                            v-if="brand.logo"
-                            :src="brand.logo"
-                            :alt="brand.name"
-                            class="h-20 max-w-[220px] opacity-60 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0"
-                        />
-                        <span v-else class="font-serif text-xl font-medium text-gray-900">{{ brand.name }}</span>
-                    </div>
+                <div
+                    v-for="brand in brands"
+                    :key="`${brand.name}-dup`"
+                    class="flex shrink-0 items-center justify-center px-4"
+                    aria-hidden="true"
+                >
+                    <img
+                        v-if="brand.logo"
+                        :src="brand.logo"
+                        :alt="brand.name"
+                        class="h-20 max-w-[220px] opacity-60 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0"
+                    />
+                    <span v-else class="font-serif text-xl font-medium text-gray-900">{{ brand.name }}</span>
                 </div>
             </div>
         </div>
@@ -202,12 +193,12 @@ function getOriginalPrice(product: typeof props.featuredProducts[0]): string | u
                         Svaki parfem u našoj kolekciji pažljivo je odabran kako bismo ti doneli najfinije mirise sa svih strana sveta. Verujemo da je parfem više od dodatka — to je izraz tvoje ličnosti, uspomene koje nosiš sa sobom i trenutak luksuza u svakodnevnici.
                     </p>
                     <div class="mt-10">
-                        <a
-                            href="/parfemi"
+                        <Link
+                            :href="products.index.url()"
                             class="inline-block border border-gray-900 bg-gray-900 px-10 py-4 text-sm font-medium tracking-[0.2em] text-white uppercase transition-all hover:bg-white hover:text-gray-900"
                         >
                             Pogledaj kolekciju
-                        </a>
+                        </Link>
                     </div>
                 </div>
             </div>
@@ -223,7 +214,7 @@ function getOriginalPrice(product: typeof props.featuredProducts[0]): string | u
             <p class="mt-4 text-base leading-relaxed text-gray-500">
                 Prvi saznaj za nove mirise, ekskluzivne kolekcije i specijalne ponude.
             </p>
-            <form class="mt-8 flex flex-col gap-4 sm:flex-row">
+            <form class="mt-8 flex flex-col gap-4 sm:flex-row" @submit.prevent="submitNewsletter">
                 <input
                     type="email"
                     placeholder="Tvoja email adresa"
@@ -262,7 +253,7 @@ function getOriginalPrice(product: typeof props.featuredProducts[0]): string | u
         transform: translateX(0);
     }
     100% {
-        transform: translateX(-100%);
+        transform: translateX(-50%);
     }
 }
 

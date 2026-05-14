@@ -2,6 +2,8 @@
 import { Head, useForm, usePage } from '@inertiajs/vue3'
 import { computed } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
+import { formatPrice } from '@/lib/utils'
+import checkoutRoutes from '@/routes/checkout'
 
 defineOptions({ layout: AppLayout })
 
@@ -35,12 +37,53 @@ const form = useForm({
     city: '',
 })
 
-function submit() {
-    form.post('/checkout')
-}
+function validateAndSubmit() {
+    form.clearErrors()
 
-function formatPrice(price: number): string {
-    return new Intl.NumberFormat('sr-RS').format(price) + ' RSD'
+    const phonePattern = /^\+381\s?[0-9]{1,2}\s?[0-9]{6,7}$/
+    const housePattern = /^(\d{1,5}|bb)$/i
+    const zipPattern = /^\d{5}$/
+
+    let hasError = false
+
+    if (! authUser.value) {
+        if (! form.name.trim()) {
+            form.setError('name', 'Ime i prezime su obavezni.')
+            hasError = true
+        }
+        if (! form.email.trim()) {
+            form.setError('email', 'Email adresa je obavezna.')
+            hasError = true
+        }
+        if (! phonePattern.test(form.phone)) {
+            form.setError('phone', 'Broj telefona mora biti u formatu +381 60 1234567.')
+            hasError = true
+        }
+    }
+
+    if (! form.address.trim()) {
+        form.setError('address', 'Adresa je obavezna.')
+        hasError = true
+    }
+
+    if (! housePattern.test(form.house_number)) {
+        form.setError('house_number', 'Kućni broj može biti do 5 cifara ili "bb".')
+        hasError = true
+    }
+
+    if (! zipPattern.test(form.zip)) {
+        form.setError('zip', 'Poštanski broj mora imati tačno 5 cifara.')
+        hasError = true
+    }
+
+    if (! form.city.trim()) {
+        form.setError('city', 'Grad je obavezan.')
+        hasError = true
+    }
+
+    if (hasError) return
+
+    form.post(checkoutRoutes.store.url())
 }
 </script>
 
@@ -54,7 +97,7 @@ function formatPrice(price: number): string {
 
         <div class="grid grid-cols-1 gap-12 lg:grid-cols-2">
             <!-- Shipping Form -->
-            <form @submit.prevent="submit" class="space-y-8">
+            <form @submit.prevent="validateAndSubmit" class="space-y-8">
                 <div v-if="!authUser">
                     <h2 class="mb-6 text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">
                         Lični podaci
@@ -68,6 +111,7 @@ function formatPrice(price: number): string {
                                 v-model="form.name"
                                 type="text"
                                 required
+                                maxlength="255"
                                 class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
                                 :class="{ 'border-red-500': form.errors.name }"
                             />
@@ -82,6 +126,7 @@ function formatPrice(price: number): string {
                                     v-model="form.email"
                                     type="email"
                                     required
+                                    maxlength="255"
                                     class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
                                     :class="{ 'border-red-500': form.errors.email }"
                                 />
@@ -95,6 +140,8 @@ function formatPrice(price: number): string {
                                     v-model="form.phone"
                                     type="tel"
                                     required
+                                    maxlength="17"
+                                    pattern="\+381\s?[0-9]{1,2}\s?[0-9]{6,7}"
                                     class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
                                     :class="{ 'border-red-500': form.errors.phone }"
                                 />
@@ -118,6 +165,7 @@ function formatPrice(price: number): string {
                                     v-model="form.address"
                                     type="text"
                                     required
+                                    maxlength="255"
                                     class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
                                     :class="{ 'border-red-500': form.errors.address }"
                                 />
@@ -125,12 +173,14 @@ function formatPrice(price: number): string {
                             </div>
                             <div>
                                 <label class="mb-2 block text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">
-                                    Broj
+                                    Broj kuće
                                 </label>
                                 <input
                                     v-model="form.house_number"
                                     type="text"
                                     required
+                                    maxlength="5"
+                                    pattern="(\d{1,5}|bb|BB)"
                                     class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
                                     :class="{ 'border-red-500': form.errors.house_number }"
                                 />
@@ -146,6 +196,9 @@ function formatPrice(price: number): string {
                                     v-model="form.zip"
                                     type="text"
                                     required
+                                    maxlength="5"
+                                    pattern="\d{5}"
+                                    inputmode="numeric"
                                     class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
                                     :class="{ 'border-red-500': form.errors.zip }"
                                 />
@@ -159,6 +212,7 @@ function formatPrice(price: number): string {
                                     v-model="form.city"
                                     type="text"
                                     required
+                                    maxlength="100"
                                     class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
                                     :class="{ 'border-red-500': form.errors.city }"
                                 />

@@ -10,7 +10,6 @@ use App\Models\OrderItem;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -18,7 +17,7 @@ use Inertia\Response;
 
 class CheckoutController extends Controller
 {
-    public function create(Request $request): Response
+    public function create(Request $request): Response|RedirectResponse
     {
         $cart = $this->getCart();
 
@@ -26,7 +25,11 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index');
         }
 
-        $cart->load(['items.productVariant.product.brand', 'items.productVariant.prices', 'items.productVariant.promotions']);
+        $cart->load([
+            'items.productVariant.product.brand',
+            'items.productVariant.prices',
+            'items.productVariant.promotions',
+        ]);
 
         $items = $cart->items->map(function ($item) {
             $variant = $item->productVariant;
@@ -69,7 +72,19 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index');
         }
 
-        $cart->load(['items.productVariant.prices', 'items.productVariant.promotions']);
+        $cart->load([
+            'items.productVariant.product',
+            'items.productVariant.prices',
+            'items.productVariant.promotions',
+        ]);
+
+        foreach ($cart->items as $item) {
+            $variant = $item->productVariant;
+
+            if (! $variant || ! $variant->is_active || ! $variant->is_available || ! $variant->product->is_active) {
+                return redirect()->route('cart.index')->with('error', 'Neki proizvodi u korpi više nisu dostupni.');
+            }
+        }
 
         $order = DB::transaction(function () use ($request, $cart) {
             $subtotal = 0;
@@ -85,10 +100,9 @@ class CheckoutController extends Controller
 
             $shipping = 500;
 
-            $order = Order::create([
+            $order = new Order([
                 'user_id' => Auth::id(),
-                'order_number' => 'DND-'.now()->format('Ymd').'-'.Str::upper(Str::random(3)),
-                'status' => OrderStatus::Pending,
+                'order_number' => 'DND-'.now()->format('Ymd').'-'.Str::upper(Str::random(8)),
                 'guest_email' => Auth::guest() ? $request->email : null,
                 'guest_phone' => Auth::guest() ? $request->phone : null,
                 'guest_name' => Auth::guest() ? $request->name : null,
@@ -96,10 +110,12 @@ class CheckoutController extends Controller
                 'shipping_house_number' => $request->house_number,
                 'shipping_zip' => $request->zip,
                 'shipping_city' => $request->city,
-                'total_amount' => $subtotal + $shipping,
                 'shipping_cost' => $shipping,
                 'payment_method' => 'cash_on_delivery',
             ]);
+            $order->total_amount = $subtotal + $shipping;
+            $order->status = OrderStatus::Pending;
+            $order->save();
 
             foreach ($cart->items as $item) {
                 $variant = $item->productVariant;
@@ -110,12 +126,16 @@ class CheckoutController extends Controller
                     ->first();
                 $unitPrice = $promotion?->sale_price ?? $price?->amount ?? 0;
 
-                OrderItem::create([
+                $orderItem = new OrderItem([
                     'order_id' => $order->id,
                     'product_variant_id' => $variant->id,
                     'quantity' => $item->quantity,
-                    'unit_price' => $unitPrice,
+                    'product_name_snapshot' => $variant->product->name,
+                    'sku_snapshot' => $variant->sku,
+                    'size_label_snapshot' => $variant->size_label,
                 ]);
+                $orderItem->unit_price = $unitPrice;
+                $orderItem->save();
             }
 
             $cart->items()->delete();
@@ -123,6 +143,8 @@ class CheckoutController extends Controller
 
             return $order;
         });
+
+        session()->put('last_order_number', $order->order_number);
 
         return redirect()->route('orders.show', $order->order_number);
     }
@@ -136,13 +158,7 @@ class CheckoutController extends Controller
                 ->first();
         }
 
-        $sessionId = Cookie::get('cart_session');
-
-        if (! $sessionId) {
-            return null;
-        }
-
-        return Cart::where('session_id', $sessionId)
+        return Cart::where('session_id', session()->getId())
             ->where('expires_at', '>', now())
             ->latest()
             ->first();

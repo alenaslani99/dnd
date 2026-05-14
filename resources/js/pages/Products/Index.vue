@@ -1,44 +1,48 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3'
-import { computed } from 'vue'
+import { Head, Link, router } from '@inertiajs/vue3'
+import { computed, ref } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import ProductCard from '@/components/ProductCard.vue'
+import { formatPrice } from '@/lib/utils'
+import type { ProductListItem, ProductFilters, Brand } from '@/types'
+import productRoutes from '@/routes/products'
 
 defineOptions({ layout: AppLayout })
 
 const props = defineProps<{
     products: {
-        id: number
-        slug: string
-        name: string
-        brand: string
-        image: string
-        price: number | null
-        sale_price: number | null
-        size_label: string | null
-    }[]
-    filters: {
-        brands: string[]
-        sizes: string[]
-        sort: string
+        data: ProductListItem[]
+        current_page: number
+        last_page: number
+        prev_page_url: string | null
+        next_page_url: string | null
     }
-    brands: { id: number; name: string; slug: string }[]
+    filters: ProductFilters
+    brands: Brand[]
     sizes: string[]
+    genders: { value: string; label: string }[]
 }>()
+
+const showFilters = ref(false)
 
 const selectedBrands = computed({
     get: () => props.filters.brands ?? [],
-    set: (val: string[]) => applyFilters(),
+    set: () => applyFilters(),
 })
 
 const selectedSizes = computed({
     get: () => props.filters.sizes ?? [],
-    set: (val: string[]) => applyFilters(),
+    set: () => applyFilters(),
+})
+
+const selectedGenders = computed({
+    get: () => props.filters.genders ?? [],
+    set: () => applyFilters(),
 })
 
 const selectedSort = computed({
     get: () => props.filters.sort ?? 'newest',
-    set: (val: string) => applyFilters(),
+    set: () => applyFilters(),
 })
 
 function toggleBrand(slug: string) {
@@ -61,10 +65,21 @@ function toggleSize(size: string) {
     applyFilters()
 }
 
+function toggleGender(gender: string) {
+    const idx = selectedGenders.value.indexOf(gender)
+    if (idx > -1) {
+        selectedGenders.value.splice(idx, 1)
+    } else {
+        selectedGenders.value.push(gender)
+    }
+    applyFilters()
+}
+
 function applyFilters() {
-    router.get('/parfemi', {
+    router.get(productRoutes.index.url(), {
         brands: selectedBrands.value.length > 0 ? selectedBrands.value : undefined,
         sizes: selectedSizes.value.length > 0 ? selectedSizes.value : undefined,
+        genders: selectedGenders.value.length > 0 ? selectedGenders.value : undefined,
         sort: selectedSort.value,
     }, {
         preserveState: true,
@@ -74,7 +89,7 @@ function applyFilters() {
 }
 
 function clearFilters() {
-    router.get('/parfemi', {}, {
+    router.get(productRoutes.index.url(), {}, {
         preserveState: true,
         preserveScroll: true,
         replace: true,
@@ -85,16 +100,12 @@ const activeFiltersCount = computed(() => {
     let count = 0
     if (selectedBrands.value.length > 0) count += selectedBrands.value.length
     if (selectedSizes.value.length > 0) count += selectedSizes.value.length
+    if (selectedGenders.value.length > 0) count += selectedGenders.value.length
     if (selectedSort.value !== 'newest') count++
     return count
 })
 
-function formatPrice(price: number | null): string {
-    if (!price) return ''
-    return new Intl.NumberFormat('sr-RS').format(price) + ' RSD'
-}
-
-function getBadge(product: { sale_price: number | null }): string | undefined {
+function getBadge(product: ProductListItem): string | undefined {
     if (product.sale_price) return 'Akcija'
     return undefined
 }
@@ -125,16 +136,18 @@ const sortOptions = [
         <!-- Toolbar -->
         <div class="mb-10 flex flex-wrap items-center justify-between gap-4">
             <p class="text-sm text-gray-500">
-                {{ products.length }} proizvoda
+                {{ products.data.length }} proizvoda
             </p>
 
             <div class="flex items-center gap-3">
                 <!-- Filter Toggle -->
                 <button
                     type="button"
-                    class="flex items-center gap-2 border border-gray-200 px-4 py-2.5 text-xs font-medium tracking-[0.1em] text-gray-700 uppercase transition-colors hover:border-gray-900 hover:text-gray-900"
+                    class="flex cursor-pointer items-center gap-2 border border-gray-200 px-4 py-2.5 text-xs font-medium tracking-[0.1em] text-gray-700 uppercase transition-colors hover:border-gray-900 hover:text-gray-900"
+                    :class="showFilters ? 'border-gray-900 text-gray-900' : ''"
+                    @click="showFilters = !showFilters"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
                     Filteri
                     <span
                         v-if="activeFiltersCount > 0"
@@ -145,24 +158,32 @@ const sortOptions = [
                 </button>
 
                 <!-- Sort -->
-                <select
-                    v-model="selectedSort"
-                    class="cursor-pointer border border-gray-200 bg-white px-4 py-2.5 text-xs font-medium tracking-[0.1em] text-gray-700 uppercase outline-none transition-colors hover:border-gray-900"
-                >
-                    <option
-                        v-for="option in sortOptions"
-                        :key="option.value"
-                        :value="option.value"
+                <div class="relative">
+                    <select
+                        v-model="selectedSort"
+                        class="cursor-pointer appearance-none border border-gray-200 bg-white pr-10 pl-4 py-2.5 text-xs font-medium tracking-[0.1em] text-gray-700 uppercase outline-none transition-colors hover:border-gray-900"
                     >
-                        {{ option.label }}
-                    </option>
-                </select>
+                        <option
+                            v-for="option in sortOptions"
+                            :key="option.value"
+                            :value="option.value"
+                        >
+                            {{ option.label }}
+                        </option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Filter Panel -->
-        <div class="mb-10 border border-gray-100 bg-gray-50 px-6 py-6">
-            <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
+        <div
+            v-show="showFilters"
+            class="mb-10 border border-gray-100 bg-gray-50 px-6 py-6"
+        >
+            <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
                 <!-- Brand Filter -->
                 <div>
                     <label class="mb-3 block text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">
@@ -173,12 +194,12 @@ const sortOptions = [
                             v-for="brand in brands"
                             :key="brand.id"
                             type="button"
-                            @click="toggleBrand(brand.slug)"
                             class="border px-4 py-2 text-xs font-medium tracking-wider uppercase transition-all"
                             :class="selectedBrands.includes(brand.slug)
                                 ? 'border-gray-900 bg-gray-900 text-white'
                                 : 'border-gray-200 bg-white text-gray-700 hover:border-gray-900'
                             "
+                            @click="toggleBrand(brand.slug)"
                         >
                             {{ brand.name }}
                         </button>
@@ -195,14 +216,36 @@ const sortOptions = [
                             v-for="size in sizes"
                             :key="size"
                             type="button"
-                            @click="toggleSize(size)"
                             class="border px-4 py-2 text-xs font-medium tracking-wider uppercase transition-all"
                             :class="selectedSizes.includes(size)
                                 ? 'border-gray-900 bg-gray-900 text-white'
                                 : 'border-gray-200 bg-white text-gray-700 hover:border-gray-900'
                             "
+                            @click="toggleSize(size)"
                         >
                             {{ size }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Gender Filter -->
+                <div>
+                    <label class="mb-3 block text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">
+                        Pol
+                    </label>
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            v-for="gender in genders"
+                            :key="gender.value"
+                            type="button"
+                            class="border px-4 py-2 text-xs font-medium tracking-wider uppercase transition-all"
+                            :class="selectedGenders.includes(gender.value)
+                                ? 'border-gray-900 bg-gray-900 text-white'
+                                : 'border-gray-200 bg-white text-gray-700 hover:border-gray-900'
+                            "
+                            @click="toggleGender(gender.value)"
+                        >
+                            {{ gender.label }}
                         </button>
                     </div>
                 </div>
@@ -211,8 +254,8 @@ const sortOptions = [
             <div class="mt-6 flex items-center gap-4 border-t border-gray-200 pt-4">
                 <button
                     type="button"
-                    @click="clearFilters"
                     class="text-xs font-medium tracking-[0.1em] text-gray-500 uppercase transition-colors hover:text-red-600"
+                    @click="clearFilters"
                 >
                     Očisti filtere
                 </button>
@@ -222,25 +265,52 @@ const sortOptions = [
         <!-- Product Grid -->
         <div class="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
             <ProductCard
-                v-for="product in products"
+                v-for="product in products.data"
                 :key="product.id"
                 :image="product.image"
                 :brand="product.brand"
                 :name="product.name + (product.size_label ? ' ' + product.size_label : '')"
                 :price="formatPrice(product.sale_price ?? product.price)"
                 :original-price="product.sale_price ? formatPrice(product.price) : undefined"
-                :href="`/parfemi/${product.slug}`"
+                :href="productRoutes.show.url(product.slug)"
                 :badge="getBadge(product)"
             />
         </div>
 
+        <!-- Pagination -->
+        <div v-if="products.last_page > 1" class="mt-14 flex items-center justify-center gap-4">
+            <Link
+                v-if="products.prev_page_url"
+                :href="products.prev_page_url"
+                preserve-state
+                preserve-scroll
+                class="border border-gray-200 px-6 py-2.5 text-xs font-medium tracking-[0.1em] text-gray-700 uppercase transition-colors hover:border-gray-900 hover:text-gray-900"
+            >
+                Prethodna
+            </Link>
+            <span class="text-xs text-gray-400">
+                Strana {{ products.current_page }} / {{ products.last_page }}
+            </span>
+            <Link
+                v-if="products.next_page_url"
+                :href="products.next_page_url"
+                preserve-state
+                preserve-scroll
+                class="border border-gray-200 px-6 py-2.5 text-xs font-medium tracking-[0.1em] text-gray-700 uppercase transition-colors hover:border-gray-900 hover:text-gray-900"
+            >
+                Sledeća
+            </Link>
+        </div>
+
         <!-- Empty State -->
-        <div v-if="products.length === 0" class="py-20 text-center">
-            <p class="text-lg text-gray-400">Nema proizvoda koji odgovaraju izabranim filterima.</p>
+        <div v-if="products.data.length === 0" class="py-20 text-center">
+            <p class="text-lg text-gray-400">
+                Nema proizvoda koji odgovaraju izabranim filterima.
+            </p>
             <button
                 type="button"
-                @click="clearFilters"
                 class="mt-4 text-sm font-medium tracking-[0.1em] text-red-600 underline-offset-4 transition-colors hover:text-red-700 hover:underline uppercase"
+                @click="clearFilters"
             >
                 Očisti filtere
             </button>

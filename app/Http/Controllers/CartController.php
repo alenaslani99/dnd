@@ -9,7 +9,6 @@ use App\Models\ProductVariant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cookie;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -34,8 +33,7 @@ class CartController extends Controller
             return $cart;
         }
 
-        $sessionId = Cookie::get('cart_session') ?? session()->getId();
-        Cookie::queue('cart_session', $sessionId, 60 * 24 * 7);
+        $sessionId = session()->getId();
 
         $cart = Cart::where('session_id', $sessionId)
             ->where('expires_at', '>', now())
@@ -56,7 +54,12 @@ class CartController extends Controller
     public function index(Request $request): Response
     {
         $cart = $this->getOrCreateCart();
-        $cart->load(['items.productVariant.product.brand', 'items.productVariant.prices', 'items.productVariant.promotions']);
+        $cart->load([
+            'items.productVariant.product.brand',
+            'items.productVariant.product.images',
+            'items.productVariant.prices',
+            'items.productVariant.promotions',
+        ]);
 
         return Inertia::render('Cart/Index', [
             'cart' => [
@@ -96,6 +99,7 @@ class CartController extends Controller
 
                     return ($promotion?->sale_price ?? $price?->amount) * $item->quantity;
                 }),
+                'shipping_cost' => 500,
             ],
         ]);
     }
@@ -103,12 +107,26 @@ class CartController extends Controller
     public function store(StoreRequest $request): RedirectResponse
     {
         $cart = $this->getOrCreateCart();
-        $variant = ProductVariant::findOrFail($request->product_variant_id);
+        $variant = ProductVariant::with('product')->findOrFail($request->product_variant_id);
+
+        if (! $variant->is_active || ! $variant->product->is_active) {
+            return redirect()->back()->with('error', 'Proizvod nije dostupan.');
+        }
+
+        if (! $variant->is_available) {
+            return redirect()->back()->with('error', 'Proizvod trenutno nije na stanju.');
+        }
 
         $item = $cart->items()->where('product_variant_id', $variant->id)->first();
 
         if ($item) {
-            $item->update(['quantity' => $item->quantity + $request->quantity]);
+            $newQuantity = $item->quantity + $request->quantity;
+
+            if ($newQuantity > 10) {
+                return redirect()->back()->with('error', 'Maksimalna količina po proizvodu je 10.');
+            }
+
+            $item->update(['quantity' => $newQuantity]);
         } else {
             $cart->items()->create([
                 'product_variant_id' => $variant->id,
@@ -116,12 +134,19 @@ class CartController extends Controller
             ]);
         }
 
-        return redirect()->route('cart.index')->with('success', 'Proizvod dodat u korpu.');
+        return redirect()->route('cart.index');
     }
 
     public function update(Request $request, CartItem $item): RedirectResponse
     {
+        $this->authorize('update', $item);
+
         $request->validate(['quantity' => ['required', 'integer', 'min:1', 'max:10']]);
+
+        $variant = $item->productVariant;
+        if ($variant && ! $variant->is_available) {
+            return redirect()->back()->with('error', 'Proizvod trenutno nije na stanju.');
+        }
 
         $item->update(['quantity' => $request->quantity]);
 
@@ -130,6 +155,8 @@ class CartController extends Controller
 
     public function destroy(CartItem $item): RedirectResponse
     {
+        $this->authorize('delete', $item);
+
         $item->delete();
 
         return redirect()->route('cart.index');
