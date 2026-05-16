@@ -27,13 +27,11 @@ class CheckoutController extends Controller
 
         $cart->load([
             'items.productVariant.product.brand',
-            'items.productVariant.prices',
-            'items.productVariant.promotions',
         ]);
 
         $items = $cart->items->map(function ($item) {
             $variant = $item->productVariant;
-            $unitPrice = $variant->activePrice() ?? 0;
+            $unitPrice = $item->price_snapshot ?? $variant->activePrice() ?? 0;
 
             return [
                 'id' => $item->id,
@@ -68,9 +66,7 @@ class CheckoutController extends Controller
         }
 
         $cart->load([
-            'items.productVariant.product',
-            'items.productVariant.prices',
-            'items.productVariant.promotions',
+            'items.productVariant.product.brand',
         ]);
 
         foreach ($cart->items as $item) {
@@ -84,7 +80,7 @@ class CheckoutController extends Controller
         $order = DB::transaction(function () use ($request, $cart) {
             $subtotal = 0;
             foreach ($cart->items as $item) {
-                $subtotal += ($item->productVariant->activePrice() ?? 0) * $item->quantity;
+                $subtotal += ($item->price_snapshot ?? $item->productVariant->activePrice() ?? 0) * $item->quantity;
             }
 
             $shipping = 500;
@@ -108,15 +104,17 @@ class CheckoutController extends Controller
 
             foreach ($cart->items as $item) {
                 $variant = $item->productVariant;
-                $unitPrice = $variant->activePrice() ?? 0;
+                $unitPrice = $item->price_snapshot ?? $variant->activePrice() ?? 0;
 
-                $orderItem = new OrderItem([
+                OrderItem::create([
                     'order_id' => $order->id,
                     'product_variant_id' => $variant->id,
                     'quantity' => $item->quantity,
+                    'unit_price' => $unitPrice,
+                    'product_name_snapshot' => $variant->product->name,
+                    'brand_name_snapshot' => $variant->product->brand->name,
+                    'size_label_snapshot' => $variant->size_label,
                 ]);
-                $orderItem->unit_price = $unitPrice;
-                $orderItem->save();
             }
 
             $cart->items()->delete();

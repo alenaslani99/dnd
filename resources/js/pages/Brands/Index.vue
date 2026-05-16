@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
+import PageContainer from '@/components/PageContainer.vue'
+import SectionHeader from '@/components/SectionHeader.vue'
 import type { BrandWithCount } from '@/types'
 import productRoutes from '@/routes/products'
 
@@ -14,15 +16,12 @@ defineProps<{
 <template>
     <Head title="Brendovi" />
 
-    <section class="mx-auto max-w-7xl px-6 py-24 lg:px-8">
-        <div class="mb-16 text-center">
-            <h1 class="font-serif text-4xl font-medium tracking-wide text-gray-900 lg:text-5xl">
-                Brendovi
-            </h1>
-            <p class="mt-4 text-base text-gray-500">
-                Otkrij luksuzne brendove u našoj kolekciji
-            </p>
-        </div>
+    <PageContainer>
+        <SectionHeader
+            title="Brendovi"
+            subtitle="Otkrij luksuzne brendove u našoj kolekciji"
+            margin-bottom="large"
+        />
 
         <div class="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
             <Link
@@ -45,5 +44,5 @@ defineProps<{
                 </span>
             </Link>
         </div>
-    </section>
+    </PageContainer>
 </template>

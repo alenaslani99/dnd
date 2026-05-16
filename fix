@@ -1,0 +1,37 @@
+Inline cart-item mapping duplicated — Nearly identical array mapping logic appears in CartController::index(), CheckoutController::create(), and CheckoutController::store().	CartController.php, CheckoutController.php	Violates DRY; any change to cart item shape requires 3 edits.
+2	CheckoutController::store() sets unit_price outside of fillable	CheckoutController.php:118	OrderItem fillable lacks unit_price, forcing manual assignment after new OrderItem([...]). Should either be fillable or handled in a dedicated action.
+3	Manual role assignment after creation	RegisterController.php:32	role is not in User $fillable, so it's set manually after User::create(). This is inconsistent with mass-assignment patterns.
+4	TrackOrderController::store() uses inline validation	TrackOrderController.php:50	Should use a dedicated StoreRequest Form Request for consistency with the rest of the app.
+5	CartController::update() uses inline validation	CartController.php:95	Should use a dedicated Form Request (e.g. UpdateRequest).
+6	Messy migration history — prices.effective_date, product_variants.stock_quantity, and order_items snapshot columns were added in one migration and removed in a later migration.	database/migrations/	Clutters the codebase and makes migrations:fresh slower. These should be cleaned up before production.
+7	ProductController::index() price sorting subquery is complex and likely inefficient	ProductController.php:46-59	Uses a nested select()->from('prices')->join()->whereColumn() subquery for sorting. For large catalogs, a dedicated products.lowest_price cached column or a simpler join would perform better.
+8	ProductListResource / ProductDetailResource call activePromotion() without checking eager-load	ProductListResource.php:13, ProductDetailResource.php:24	If currentPromotion is not eager-loaded (or if activePromotion() is called), this triggers an N+1 query inside the resource loop.
+9	CartItemPolicy uses Auth::check() instead of $user parameter	CartItemPolicy.php:14	The policy already receives ?User $user. Using Auth::check() is redundant and inconsistent with Laravel authorization patterns.
+10	HandleInertiaRequests has unnecessary session guard	HandleInertiaRequests.php:40-43	parent::share($request) handles missing sessions gracefully. The extra if ($request->hasSession()) branch is redundant.
+Frontend (Vue)
+#	Problem	Location	Impact
+11	Repeated form input class string — The exact same 100+ character class string is copy-pasted on every input.	Login.vue, Register.vue, Contact/Index.vue, Checkout/Index.vue	Extreme redundancy. Changing the input style requires 10+ edits.
+12	Repeated primary button class string — The same dark button styling is duplicated across every page.	Almost every .vue page	Violates DRY; inconsistent styling risk.
+13	Order summary block duplicated — Identical order detail/summary HTML exists in Orders/Show.vue and TrackOrder/Index.vue.	Orders/Show.vue, TrackOrder/Index.vue	Any UI change to order display requires two edits.
+14	Navigation.vue inline SVG bloat — 6+ inline SVG icons clutter the template and make the component unnecessarily large.	Navigation.vue	Hard to maintain; cannot reuse icons elsewhere.
+15	Section wrapper class repeated — mx-auto max-w-7xl px-6 py-24 lg:px-8 appears on virtually every page.	All page components	Should be a PageSection or Container layout component.
+🔵 Component Extraction Opportunities
+High Priority (Immediate Value)
+Component	Source Files	Purpose
+BaseInput.vue	Login.vue, Register.vue, Contact/Index.vue, Checkout/Index.vue	Wraps label, input, error message, and the shared bottom-border styling. Supports v-model, error, label, required, type.
+PrimaryButton.vue	Every page with a submit/action button	Encapsulates the dark bg-gray-900 button with hover state, disabled state, and loading text.
+GhostButton.vue	Cart/Index.vue, Orders/Show.vue, TrackOrder/Index.vue	The secondary/outline button style (e.g. "Nastavi kupovinu").
+PageContainer.vue	All page components	The repeated section wrapper with max-w-7xl, px-6, py-24, etc.
+SectionHeader.vue	Brands/Index.vue, Contact/Index.vue, Cart/Index.vue, Checkout/Index.vue, etc.	Centered h1 title + optional subtitle pattern.
+OrderSummary.vue	Orders/Show.vue, TrackOrder/Index.vue, Checkout/Index.vue	Reusable order details block (order number, date, status badge, items list, totals).
+Medium Priority (Nice to Have)
+Component	Source Files	Purpose
+QuantitySelector.vue	Cart/Index.vue	+/- buttons with quantity display.
+FilterButton.vue	Products/Index.vue	The brand/size/gender toggle pill buttons.
+PriceDisplay.vue	Products/Show.vue, ProductCard.vue	Price with optional sale price and strikethrough styling.
+ProductImageGallery.vue	Products/Show.vue	Main image + thumbnail strip with active state.
+CartItem.vue	Cart/Index.vue	Single cart item row (image, brand, name, quantity, price, remove).
+OrderItemList.vue	Checkout/Index.vue, Orders/Show.vue, TrackOrder/Index.vue	List of order items with product name, brand, size, qty, total.
+Icon.vue (or IconSearch.vue, IconUser.vue, etc.)	Navigation.vue	Reusable SVG icons instead of inline SVG strings.
+MobileMenu.vue	Navigation.vue	The full-screen mobile overlay is ~80 lines and could live in its own component.
+StatusBadge.vue is already extracted	—	Good job here — but it only renders text. Consider adding color coding per status.

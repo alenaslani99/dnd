@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
-import FormField from '@/components/FormField.vue'
+import BaseInput from '@/components/BaseInput.vue'
+import PageContainer from '@/components/PageContainer.vue'
+import PrimaryButton from '@/components/PrimaryButton.vue'
+import SectionHeader from '@/components/SectionHeader.vue'
 import contactRoutes from '@/routes/contact'
 
 defineOptions({ layout: AppLayout })
@@ -24,15 +27,12 @@ function submit() {
 <template>
     <Head title="Kontakt" />
 
-    <section class="mx-auto max-w-7xl px-6 py-24 lg:px-8">
-        <div class="mb-16 text-center">
-            <h1 class="font-serif text-4xl font-medium tracking-wide text-gray-900 lg:text-5xl">
-                Kontakt
-            </h1>
-            <p class="mt-4 text-base text-gray-500">
-                Piši nam. Tu smo da ti pomognemo.
-            </p>
-        </div>
+    <PageContainer>
+        <SectionHeader
+            title="Kontakt"
+            subtitle="Piši nam. Tu smo da ti pomognemo."
+            margin-bottom="large"
+        />
 
         <div class="mx-auto grid max-w-4xl grid-cols-1 gap-16 lg:grid-cols-2">
             <!-- Contact Info -->
@@ -83,40 +83,36 @@ function submit() {
 
             <!-- Contact Form -->
             <form @submit.prevent="submit" class="space-y-8">
-                <FormField label="Ime i prezime" :error="form.errors.name">
-                    <input
-                        v-model="form.name"
-                        type="text"
-                        required
-                        maxlength="255"
-                        class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
-                        :class="{ 'border-red-500': form.errors.name }"
-                    />
-                </FormField>
+                <BaseInput
+                    v-model="form.name"
+                    label="Ime i prezime"
+                    required
+                    maxlength="255"
+                    :error="form.errors.name"
+                />
 
                 <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <FormField label="Email" :error="form.errors.email">
-                        <input
-                            v-model="form.email"
-                            type="email"
-                            required
-                            maxlength="255"
-                            class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
-                            :class="{ 'border-red-500': form.errors.email }"
-                        />
-                    </FormField>
+                    <BaseInput
+                        v-model="form.email"
+                        label="Email"
+                        type="email"
+                        required
+                        maxlength="255"
+                        :error="form.errors.email"
+                    />
 
-                    <FormField label="Telefon (opciono)">
-                        <input
-                            v-model="form.phone"
-                            type="tel"
-                            maxlength="20"
-                            class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
-                        />
-                    </FormField>
+                    <BaseInput
+                        v-model="form.phone"
+                        label="Telefon (opciono)"
+                        type="tel"
+                        maxlength="20"
+                    />
                 </div>
 
-                <FormField label="Poruka" :error="form.errors.message">
+                <div>
+                    <label class="mb-2 block text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">
+                        Poruka
+                    </label>
                     <textarea
                         v-model="form.message"
                         required
@@ -125,16 +121,13 @@ function submit() {
                         class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900 resize-none"
                         :class="{ 'border-red-500': form.errors.message }"
                     />
-                </FormField>
+                    <p v-if="form.errors.message" class="mt-2 text-xs text-red-500">{{ form.errors.message }}</p>
+                </div>
 
-                <button
-                    type="submit"
-                    :disabled="form.processing"
-                    class="w-full border border-gray-900 bg-gray-900 px-8 py-4 text-sm font-medium tracking-[0.2em] text-white uppercase transition-all hover:bg-white hover:text-gray-900 disabled:opacity-50"
-                >
-                    {{ form.processing ? 'Slanje...' : 'Pošalji poruku' }}
-                </button>
+                <PrimaryButton :loading="form.processing" loading-text="Slanje...">
+                    Pošalji poruku
+                </PrimaryButton>
             </form>
         </div>
-    </section>
+    </PageContainer>
 </template>

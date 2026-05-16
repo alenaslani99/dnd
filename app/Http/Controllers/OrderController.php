@@ -16,8 +16,18 @@ class OrderController extends Controller
             ->where('order_number', $orderNumber)
             ->firstOrFail();
 
-        if (Auth::check() && $order->user_id !== null && $order->user_id !== Auth::id()) {
-            abort(403);
+        // Strict authorization: authenticated users can only view their own orders.
+        if ($order->user_id !== null) {
+            if (! Auth::check() || $order->user_id !== Auth::id()) {
+                abort(403);
+            }
+        }
+
+        // Guest orders require secondary verification; redirect to track-order.
+        if ($order->user_id === null) {
+            return redirect()->route('track-order.create', [
+                'order_number' => $order->order_number,
+            ]);
         }
 
         return Inertia::render('Orders/Show', [
@@ -28,12 +38,10 @@ class OrderController extends Controller
                 'shipping_cost' => $order->shipping_cost,
                 'created_at' => $order->created_at->format('d.m.Y.'),
                 'items' => $order->items->map(function ($item) {
-                    $variant = $item->productVariant;
-
                     return [
-                        'product_name' => $variant?->product?->name ?? 'Proizvod',
-                        'brand_name' => $variant?->product?->brand?->name ?? '',
-                        'size_label' => $variant?->size_label,
+                        'product_name' => $item->product_name_snapshot ?? $item->productVariant?->product?->name ?? 'Proizvod',
+                        'brand_name' => $item->brand_name_snapshot ?? $item->productVariant?->product?->brand?->name ?? '',
+                        'size_label' => $item->size_label_snapshot ?? $item->productVariant?->size_label,
                         'quantity' => $item->quantity,
                         'unit_price' => $item->unit_price,
                         'total_price' => $item->unit_price * $item->quantity,

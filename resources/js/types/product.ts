@@ -7,6 +7,7 @@ export type ProductListItem = {
     price: number | null;
     sale_price: number | null;
     size_label: string | null;
+    badge?: string | null;
 };
 
 export type ProductDetail = {

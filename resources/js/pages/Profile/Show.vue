@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
+import PageContainer from '@/components/PageContainer.vue'
 
 defineOptions({ layout: AppLayout })
 
@@ -16,7 +17,7 @@ defineProps<{
 <template>
     <Head title="Profil" />
 
-    <section class="mx-auto max-w-2xl px-6 py-24 lg:px-8">
+    <PageContainer max-width="narrow">
         <h1 class="mb-12 text-center font-serif text-4xl font-medium tracking-wide text-gray-900">
             Moj profil
         </h1>
@@ -37,5 +38,5 @@ defineProps<{
                 </div>
             </div>
         </div>
-    </section>
+    </PageContainer>
 </template>

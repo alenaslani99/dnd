@@ -19,15 +19,13 @@ class CartController extends Controller
         $cart->load([
             'items.productVariant.product.brand',
             'items.productVariant.product.images',
-            'items.productVariant.latestPrice',
-            'items.productVariant.currentPromotion',
         ]);
 
         return Inertia::render('Cart/Index', [
             'cart' => [
                 'items' => $cart->items->map(function (CartItem $item) {
                     $variant = $item->productVariant;
-                    $unitPrice = $variant->activePrice();
+                    $unitPrice = $item->price_snapshot ?? $variant->activePrice() ?? 0;
 
                     return [
                         'id' => $item->id,
@@ -48,7 +46,7 @@ class CartController extends Controller
                     ];
                 }),
                 'total' => $cart->items->sum(function (CartItem $item) {
-                    return $item->productVariant->activePrice() * $item->quantity;
+                    return ($item->price_snapshot ?? $item->productVariant->activePrice() ?? 0) * $item->quantity;
                 }),
                 'shipping_cost' => 500,
             ],
@@ -69,6 +67,7 @@ class CartController extends Controller
         }
 
         $item = $cart->items()->where('product_variant_id', $variant->id)->first();
+        $unitPrice = $variant->activePrice() ?? 0;
 
         if ($item) {
             $newQuantity = $item->quantity + $request->quantity;
@@ -82,6 +81,7 @@ class CartController extends Controller
             $cart->items()->create([
                 'product_variant_id' => $variant->id,
                 'quantity' => $request->quantity,
+                'price_snapshot' => $unitPrice,
             ]);
         }
 

@@ -2,7 +2,9 @@
 import { Head, useForm } from '@inertiajs/vue3'
 import { ref, computed } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
-import { formatPrice } from '@/lib/utils'
+import PageContainer from '@/components/PageContainer.vue'
+import PriceDisplay from '@/components/PriceDisplay.vue'
+import PrimaryButton from '@/components/PrimaryButton.vue'
 import type { ProductDetail } from '@/types'
 import productRoutes from '@/routes/products'
 import cartRoutes from '@/routes/cart'
@@ -56,7 +58,7 @@ function addToCart() {
 <template>
     <Head :title="product.name" />
 
-    <section class="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-16 lg:px-8">
+    <PageContainer padding="product">
         <div class="grid grid-cols-1 gap-6 sm:gap-12 lg:grid-cols-2 lg:gap-20">
             <!-- Images -->
             <div class="space-y-3 sm:space-y-4">
@@ -96,20 +98,11 @@ function addToCart() {
                     {{ product.name }}
                 </h1>
 
-                <div class="mt-4 flex items-center gap-3 sm:mt-6">
-                    <p
-                        v-if="activeVariant?.sale_price"
-                        class="text-xl font-medium text-red-600 sm:text-2xl"
-                    >
-                        {{ formatPrice(activeVariant.sale_price) }}
-                    </p>
-                    <p
-                        class="text-xl font-medium sm:text-2xl"
-                        :class="activeVariant?.sale_price ? 'text-gray-400 line-through text-base sm:text-lg' : 'text-gray-900'"
-                    >
-                        {{ formatPrice(activeVariant?.price) }}
-                    </p>
-                </div>
+                <PriceDisplay
+                    class="mt-4 sm:mt-6"
+                    :price="activeVariant?.price"
+                    :sale-price="activeVariant?.sale_price"
+                />
 
                 <!-- Size Selector -->
                 <div class="mt-8 sm:mt-10">
@@ -155,14 +148,18 @@ function addToCart() {
                 </p>
 
                 <!-- Add to Cart -->
-                <button
+                <PrimaryButton
                     type="button"
+                    variant="full"
+                    size="small"
+                    class="mt-8 sm:mt-10"
                     :disabled="!selectedVariant || !activeVariant?.is_available || cartForm.processing"
+                    :loading="cartForm.processing"
+                    loading-text="Dodavanje..."
                     @click="addToCart"
-                    class="mt-8 w-full border border-gray-900 bg-gray-900 px-6 py-3.5 text-xs font-medium tracking-[0.2em] text-white uppercase transition-all hover:bg-white hover:text-gray-900 disabled:opacity-50 sm:mt-10 sm:px-8 sm:py-4 sm:text-sm"
                 >
-                    {{ cartForm.processing ? 'Dodavanje...' : 'Dodaj u korpu' }}
-                </button>
+                    Dodaj u korpu
+                </PrimaryButton>
 
                 <!-- Description -->
                 <div class="mt-10 border-t border-gray-100 pt-8 sm:mt-14 sm:pt-10">
@@ -175,7 +172,7 @@ function addToCart() {
                 </div>
             </div>
         </div>
-    </section>
+    </PageContainer>
 </template>
 
 <style scoped>

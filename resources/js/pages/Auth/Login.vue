@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3'
-import FormField from '@/components/FormField.vue'
+import BaseInput from '@/components/BaseInput.vue'
+import PrimaryButton from '@/components/PrimaryButton.vue'
 import { login, register, home } from '@/routes'
 
-defineOptions({ layout: null })
+defineOptions({ layout: undefined })
 
 const form = useForm({
     email: '',
@@ -36,25 +37,21 @@ function submit() {
             </div>
 
             <form @submit.prevent="submit" class="space-y-8">
-                <FormField label="Email adresa" :error="form.errors.email">
-                    <input
-                        v-model="form.email"
-                        type="email"
-                        required
-                        class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
-                        :class="{ 'border-red-500': form.errors.email }"
-                    />
-                </FormField>
+                <BaseInput
+                    v-model="form.email"
+                    label="Email adresa"
+                    type="email"
+                    required
+                    :error="form.errors.email"
+                />
 
-                <FormField label="Lozinka" :error="form.errors.password">
-                    <input
-                        v-model="form.password"
-                        type="password"
-                        required
-                        class="w-full border-b border-gray-300 bg-transparent px-1 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-gray-900"
-                        :class="{ 'border-red-500': form.errors.password }"
-                    />
-                </FormField>
+                <BaseInput
+                    v-model="form.password"
+                    label="Lozinka"
+                    type="password"
+                    required
+                    :error="form.errors.password"
+                />
 
                 <div class="flex items-center justify-between">
                     <label class="flex items-center gap-2">
@@ -67,13 +64,9 @@ function submit() {
                     </label>
                 </div>
 
-                <button
-                    type="submit"
-                    :disabled="form.processing"
-                    class="w-full border border-gray-900 bg-gray-900 px-8 py-4 text-sm font-medium tracking-[0.2em] text-white uppercase transition-all hover:bg-white hover:text-gray-900 disabled:opacity-50"
-                >
-                    {{ form.processing ? 'Prijavljivanje...' : 'Prijavi se' }}
-                </button>
+                <PrimaryButton :loading="form.processing" loading-text="Prijavljivanje...">
+                    Prijavi se
+                </PrimaryButton>
             </form>
 
             <p class="mt-10 text-center text-sm text-gray-500">

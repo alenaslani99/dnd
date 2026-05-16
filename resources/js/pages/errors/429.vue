@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3'
+import PrimaryButton from '@/components/PrimaryButton.vue'
 import { home } from '@/routes'
 </script>
 
@@ -19,11 +20,13 @@ import { home } from '@/routes'
             Previše zahteva. Molimo sačekajte pre sledećeg pokušaja.
         </p>
 
-        <Link
+        <PrimaryButton
+            as="link"
+            variant="inline"
             :href="home.url()"
-            class="mt-10 inline-block border border-gray-900 bg-gray-900 px-10 py-4 text-sm font-medium tracking-[0.2em] text-white uppercase transition-all hover:bg-white hover:text-gray-900"
+            class="mt-10"
         >
             Početna strana
-        </Link>
+        </PrimaryButton>
     </div>
 </template>

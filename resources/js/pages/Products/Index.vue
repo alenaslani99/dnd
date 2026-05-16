@@ -2,7 +2,10 @@
 import { Head, Link, router } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
+import FilterButton from '@/components/FilterButton.vue'
+import PageContainer from '@/components/PageContainer.vue'
 import ProductCard from '@/components/ProductCard.vue'
+import SectionHeader from '@/components/SectionHeader.vue'
 import { formatPrice } from '@/lib/utils'
 import type { ProductListItem, ProductFilters, Brand } from '@/types'
 import productRoutes from '@/routes/products'
@@ -97,16 +100,11 @@ const sortOptions = [
 <template>
     <Head title="Parfemi" />
 
-    <section class="mx-auto max-w-7xl px-6 py-24 lg:px-8">
-        <!-- Header -->
-        <div class="mb-12 text-center">
-            <h1 class="font-serif text-4xl font-medium tracking-wide text-gray-900 lg:text-5xl">
-                Parfemi
-            </h1>
-            <p class="mt-4 text-base text-gray-500">
-                Pažljivo odabrana kolekcija luksuznih parfema
-            </p>
-        </div>
+    <PageContainer>
+        <SectionHeader
+            title="Parfemi"
+            subtitle="Pažljivo odabrana kolekcija luksuznih parfema"
+        />
 
         <!-- Toolbar -->
         <div class="mb-10 flex flex-wrap items-center justify-between gap-4">
@@ -165,19 +163,13 @@ const sortOptions = [
                         Brend
                     </label>
                     <div class="flex flex-wrap gap-2">
-                        <button
+                        <FilterButton
                             v-for="brand in brands"
                             :key="brand.id"
-                            type="button"
-                            class="border px-4 py-2 text-xs font-medium tracking-wider uppercase transition-all"
-                            :class="selectedBrands.includes(brand.slug)
-                                ? 'border-gray-900 bg-gray-900 text-white'
-                                : 'border-gray-200 bg-white text-gray-700 hover:border-gray-900'
-                            "
-                            @click="toggleFilter(selectedBrands, brand.slug)"
-                        >
-                            {{ brand.name }}
-                        </button>
+                            :label="brand.name"
+                            :active="selectedBrands.includes(brand.slug)"
+                            @toggle="toggleFilter(selectedBrands, brand.slug)"
+                        />
                     </div>
                 </div>
 
@@ -187,19 +179,13 @@ const sortOptions = [
                         Veličina
                     </label>
                     <div class="flex flex-wrap gap-2">
-                        <button
+                        <FilterButton
                             v-for="size in sizes"
                             :key="size"
-                            type="button"
-                            class="border px-4 py-2 text-xs font-medium tracking-wider uppercase transition-all"
-                            :class="selectedSizes.includes(size)
-                                ? 'border-gray-900 bg-gray-900 text-white'
-                                : 'border-gray-200 bg-white text-gray-700 hover:border-gray-900'
-                            "
-                            @click="toggleFilter(selectedSizes, size)"
-                        >
-                            {{ size }}
-                        </button>
+                            :label="size"
+                            :active="selectedSizes.includes(size)"
+                            @toggle="toggleFilter(selectedSizes, size)"
+                        />
                     </div>
                 </div>
 
@@ -209,19 +195,13 @@ const sortOptions = [
                         Pol
                     </label>
                     <div class="flex flex-wrap gap-2">
-                        <button
+                        <FilterButton
                             v-for="gender in genders"
                             :key="gender.value"
-                            type="button"
-                            class="border px-4 py-2 text-xs font-medium tracking-wider uppercase transition-all"
-                            :class="selectedGenders.includes(gender.value)
-                                ? 'border-gray-900 bg-gray-900 text-white'
-                                : 'border-gray-200 bg-white text-gray-700 hover:border-gray-900'
-                            "
-                            @click="toggleFilter(selectedGenders, gender.value)"
-                        >
-                            {{ gender.label }}
-                        </button>
+                            :label="gender.label"
+                            :active="selectedGenders.includes(gender.value)"
+                            @toggle="toggleFilter(selectedGenders, gender.value)"
+                        />
                     </div>
                 </div>
             </div>
@@ -290,5 +270,5 @@ const sortOptions = [
                 Očisti filtere
             </button>
         </div>
-    </section>
+    </PageContainer>
 </template>
