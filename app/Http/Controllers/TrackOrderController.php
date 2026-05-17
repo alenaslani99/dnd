@@ -19,31 +19,16 @@ class TrackOrderController extends Controller
 
         $order = null;
         if ($orderNumber && $this->canViewOrder($orderNumber, $verifiedEmail)) {
-            $order = Order::with(['items.productVariant.product.brand'])
-                ->where('order_number', $orderNumber)
-                ->first();
+            $order = Order::where('order_number', $orderNumber)->first();
         }
 
         return Inertia::render('TrackOrder/Index', [
             'order' => $order ? [
                 'order_number' => $order->order_number,
                 'status' => $order->status->value,
-                'total_amount' => $order->total_amount,
-                'shipping_cost' => $order->shipping_cost,
                 'created_at' => $order->created_at->format('d.m.Y.'),
-                'items' => $order->items->map(function ($item) {
-                    return [
-                        'product_name' => $item->product_name_snapshot ?? $item->productVariant?->product?->name ?? 'Proizvod',
-                        'brand_name' => $item->brand_name_snapshot ?? $item->productVariant?->product?->brand?->name ?? '',
-                        'size_label' => $item->size_label_snapshot ?? $item->productVariant?->size_label,
-                        'quantity' => $item->quantity,
-                        'unit_price' => $item->unit_price,
-                        'total_price' => $item->unit_price * $item->quantity,
-                    ];
-                }),
             ] : null,
             'searched' => $orderNumber !== null,
-            'verified_email' => $verifiedEmail,
         ]);
     }
 

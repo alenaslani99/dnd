@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { usePage, router } from '@inertiajs/vue3'
-import { ref, watch } from 'vue'
+import { onUnmounted, ref, watch } from 'vue'
 
 const visible = ref(false)
 const message = ref('')
@@ -25,13 +25,18 @@ watch(() => usePage().props.flash as { success?: string; error?: string } | unde
     }
 }, { immediate: true })
 
-router.on('flash', (event) => {
+const unsubFlash = router.on('flash', (event) => {
     const flash = event.detail.flash as { success?: string; error?: string } | undefined
     if (flash?.success) {
         show(flash.success, false)
     } else if (flash?.error) {
         show(flash.error, true)
     }
+})
+
+onUnmounted(() => {
+    unsubFlash()
+    if (timer) clearTimeout(timer)
 })
 </script>
 

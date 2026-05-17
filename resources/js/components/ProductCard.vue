@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
+import AppImage from '@/components/AppImage.vue'
 
 defineProps<{
     image: string
@@ -15,9 +16,10 @@ defineProps<{
 <template>
     <Link :href="href || '#'" class="group block">
         <div class="relative aspect-[3/4] overflow-hidden bg-gray-100">
-            <img
+            <AppImage
                 :src="image"
                 :alt="name"
+                sizes="(max-width: 768px) 50vw, 25vw"
                 class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
             <div

@@ -22,13 +22,14 @@ class ProductDetailResource extends JsonResource
             ]),
             'variants' => $this->activeVariants->map(function ($variant) {
                 $promotion = $variant->activePromotion();
+                $price = $variant->currentPrice()?->amount;
 
                 return [
                     'id' => $variant->id,
                     'size_label' => $variant->size_label,
                     'sku' => $variant->sku,
-                    'price' => $variant->currentPrice()?->amount,
-                    'sale_price' => $promotion?->sale_price,
+                    'price' => $price !== null ? number_format($price, 0, ',', '.').' RSD' : '',
+                    'sale_price' => $promotion?->sale_price !== null ? number_format($promotion->sale_price, 0, ',', '.').' RSD' : '',
                     'is_available' => $variant->is_available,
                 ];
             }),

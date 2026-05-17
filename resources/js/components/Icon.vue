@@ -29,6 +29,7 @@ const icons: Record<string, string> = {
         stroke-width="2"
         stroke-linecap="round"
         stroke-linejoin="round"
+        aria-hidden="true"
     >
         <path v-if="name === 'search'" d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm10 2-4.35-4.35" />
         <template v-else-if="name === 'user'">

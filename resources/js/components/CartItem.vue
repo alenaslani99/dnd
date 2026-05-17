@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
+import AppImage from '@/components/AppImage.vue'
 import QuantitySelector from '@/components/QuantitySelector.vue'
 import { formatPrice } from '@/lib/utils'
 
@@ -34,9 +35,10 @@ function remove() {
     <div class="flex gap-6 border-b border-gray-100 pb-8">
         <Link :href="`/parfemi/${item.product.slug}`" class="shrink-0">
             <div class="h-32 w-24 overflow-hidden bg-gray-100">
-                <img
+                <AppImage
                     :src="item.product.image"
                     :alt="item.product.name"
+                    sizes="96px"
                     class="h-full w-full object-cover"
                 />
             </div>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3'
-import { computed, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import { navLinks } from '@/config/nav'
 import { home, login, logout } from '@/routes'
 import cart from '@/routes/cart'
@@ -47,6 +47,11 @@ watch(mobileMenuOpen, (open) => {
     } else {
         document.body.style.overflow = ''
     }
+})
+
+onUnmounted(() => {
+    if (dropdownTimer.value) clearTimeout(dropdownTimer.value)
+    document.body.style.overflow = ''
 })
 </script>
 
@@ -152,7 +157,7 @@ watch(mobileMenuOpen, (open) => {
         >
             <div
                 v-if="activeDropdown !== null && navLinks[activeDropdown]?.dropdown"
-                class="absolute left-0 right-0 z-40 border-b border-gray-100 bg-white shadow-sm"
+                class="absolute left-0 right-0 z-40 border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur"
                 @mouseenter="openDropdown(activeDropdown)"
                 @mouseleave="closeDropdown()"
             >

@@ -27,3 +27,8 @@ yarn-error.log
 /.vscode
 /.zed
 .session
+
+# Generated image thumbnails
+/public/assets/img/*_sm.webp
+/public/assets/img/*_md.webp
+/public/assets/img/*_lg.webp

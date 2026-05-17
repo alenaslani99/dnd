@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import FilterButton from '@/components/FilterButton.vue'
 import PageContainer from '@/components/PageContainer.vue'
 import ProductCard from '@/components/ProductCard.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
-import { formatPrice } from '@/lib/utils'
 import type { ProductListItem, ProductFilters, Brand } from '@/types'
 import productRoutes from '@/routes/products'
 
@@ -20,6 +19,7 @@ const props = defineProps<{
         prev_page_url: string | null
         next_page_url: string | null
     }
+    total_count: string
     filters: ProductFilters
     brands: Brand[]
     sizes: string[]
@@ -43,9 +43,14 @@ const selectedGenders = computed({
     set: () => applyFilters(),
 })
 
-const selectedSort = computed({
-    get: () => props.filters.sort ?? 'newest',
-    set: () => applyFilters(),
+const selectedSort = ref(props.filters.sort ?? 'newest')
+
+watch(() => props.filters.sort, (newSort) => {
+    selectedSort.value = newSort ?? 'newest'
+})
+
+watch(selectedSort, () => {
+    applyFilters()
 })
 
 function toggleFilter(list: string[], value: string) {
@@ -109,7 +114,7 @@ const sortOptions = [
         <!-- Toolbar -->
         <div class="mb-10 flex flex-wrap items-center justify-between gap-4">
             <p class="text-sm text-gray-500">
-                {{ products.data.length }} proizvoda
+                {{ total_count }} proizvoda
             </p>
 
             <div class="flex items-center gap-3">
@@ -120,7 +125,7 @@ const sortOptions = [
                     :class="showFilters ? 'border-gray-900 text-gray-900' : ''"
                     @click="showFilters = !showFilters"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
                     Filteri
                     <span
                         v-if="activeFiltersCount > 0"
@@ -145,77 +150,79 @@ const sortOptions = [
                         </option>
                     </select>
                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Filter Panel -->
-        <div
-            v-show="showFilters"
-            class="mb-10 border border-gray-100 bg-gray-50 px-6 py-6"
-        >
-            <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
-                <!-- Brand Filter -->
-                <div>
-                    <label class="mb-3 block text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">
-                        Brend
-                    </label>
-                    <div class="flex flex-wrap gap-2">
-                        <FilterButton
-                            v-for="brand in brands"
-                            :key="brand.id"
-                            :label="brand.name"
-                            :active="selectedBrands.includes(brand.slug)"
-                            @toggle="toggleFilter(selectedBrands, brand.slug)"
-                        />
+        <Transition name="filter-panel">
+            <div
+                v-show="showFilters"
+                class="mb-10 border border-gray-100 bg-gray-50 px-6 py-6 overflow-hidden"
+            >
+                <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
+                    <!-- Brand Filter -->
+                    <div>
+                        <label class="mb-3 block text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">
+                            Brend
+                        </label>
+                        <div class="flex flex-wrap gap-2">
+                            <FilterButton
+                                v-for="brand in brands"
+                                :key="brand.id"
+                                :label="brand.name"
+                                :active="selectedBrands.includes(brand.slug)"
+                                @toggle="toggleFilter(selectedBrands, brand.slug)"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Size Filter -->
+                    <div>
+                        <label class="mb-3 block text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">
+                            Veličina
+                        </label>
+                        <div class="flex flex-wrap gap-2">
+                            <FilterButton
+                                v-for="size in sizes"
+                                :key="size"
+                                :label="size"
+                                :active="selectedSizes.includes(size)"
+                                @toggle="toggleFilter(selectedSizes, size)"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Gender Filter -->
+                    <div>
+                        <label class="mb-3 block text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">
+                            Pol
+                        </label>
+                        <div class="flex flex-wrap gap-2">
+                            <FilterButton
+                                v-for="gender in genders"
+                                :key="gender.value"
+                                :label="gender.label"
+                                :active="selectedGenders.includes(gender.value)"
+                                @toggle="toggleFilter(selectedGenders, gender.value)"
+                            />
+                        </div>
                     </div>
                 </div>
 
-                <!-- Size Filter -->
-                <div>
-                    <label class="mb-3 block text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">
-                        Veličina
-                    </label>
-                    <div class="flex flex-wrap gap-2">
-                        <FilterButton
-                            v-for="size in sizes"
-                            :key="size"
-                            :label="size"
-                            :active="selectedSizes.includes(size)"
-                            @toggle="toggleFilter(selectedSizes, size)"
-                        />
-                    </div>
-                </div>
-
-                <!-- Gender Filter -->
-                <div>
-                    <label class="mb-3 block text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">
-                        Pol
-                    </label>
-                    <div class="flex flex-wrap gap-2">
-                        <FilterButton
-                            v-for="gender in genders"
-                            :key="gender.value"
-                            :label="gender.label"
-                            :active="selectedGenders.includes(gender.value)"
-                            @toggle="toggleFilter(selectedGenders, gender.value)"
-                        />
-                    </div>
+                <div class="mt-6 flex items-center gap-4 border-t border-gray-200 pt-4">
+                    <button
+                        type="button"
+                        class="text-xs font-medium tracking-[0.1em] text-gray-500 uppercase transition-colors hover:text-red-600"
+                        @click="clearFilters"
+                    >
+                        Očisti filtere
+                    </button>
                 </div>
             </div>
-
-            <div class="mt-6 flex items-center gap-4 border-t border-gray-200 pt-4">
-                <button
-                    type="button"
-                    class="text-xs font-medium tracking-[0.1em] text-gray-500 uppercase transition-colors hover:text-red-600"
-                    @click="clearFilters"
-                >
-                    Očisti filtere
-                </button>
-            </div>
-        </div>
+        </Transition>
 
         <!-- Product Grid -->
         <div class="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
@@ -225,8 +232,8 @@ const sortOptions = [
                 :image="product.image"
                 :brand="product.brand"
                 :name="product.name + (product.size_label ? ' ' + product.size_label : '')"
-                :price="formatPrice(product.sale_price ?? product.price)"
-                :original-price="product.sale_price ? formatPrice(product.price) : undefined"
+                :price="product.sale_price || product.price"
+                :original-price="product.sale_price ? product.price : undefined"
                 :href="productRoutes.show.url(product.slug)"
                 :badge="product.badge ?? undefined"
             />
@@ -238,7 +245,6 @@ const sortOptions = [
                 v-if="products.prev_page_url"
                 :href="products.prev_page_url"
                 preserve-state
-                preserve-scroll
                 class="border border-gray-200 px-6 py-2.5 text-xs font-medium tracking-[0.1em] text-gray-700 uppercase transition-colors hover:border-gray-900 hover:text-gray-900"
             >
                 Prethodna
@@ -250,7 +256,6 @@ const sortOptions = [
                 v-if="products.next_page_url"
                 :href="products.next_page_url"
                 preserve-state
-                preserve-scroll
                 class="border border-gray-200 px-6 py-2.5 text-xs font-medium tracking-[0.1em] text-gray-700 uppercase transition-colors hover:border-gray-900 hover:text-gray-900"
             >
                 Sledeća
@@ -272,3 +277,22 @@ const sortOptions = [
         </div>
     </PageContainer>
 </template>
+
+<style scoped>
+.filter-panel-enter-active,
+.filter-panel-leave-active {
+    transition: max-height 400ms ease, opacity 400ms ease, margin 400ms ease;
+    max-height: 500px;
+}
+
+.filter-panel-enter-from,
+.filter-panel-leave-to {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-width: 0;
+}
+</style>

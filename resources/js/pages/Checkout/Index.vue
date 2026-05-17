@@ -3,11 +3,10 @@ import { Head, useForm, usePage } from '@inertiajs/vue3'
 import { computed } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import BaseInput from '@/components/BaseInput.vue'
-import OrderItemList from '@/components/OrderItemList.vue'
+import OrderSummary from '@/components/OrderSummary.vue'
 import PageContainer from '@/components/PageContainer.vue'
 import PhoneInput from '@/components/PhoneInput.vue'
 import PrimaryButton from '@/components/PrimaryButton.vue'
-import { formatPrice } from '@/lib/utils'
 import { PHONE_REGEX, HOUSE_NUMBER_REGEX, ZIP_REGEX } from '@/lib/validation'
 import checkoutRoutes from '@/routes/checkout'
 
@@ -25,7 +24,6 @@ const props = defineProps<{
     }[]
     summary: {
         subtotal: number
-        shipping: number
         total: number
     }
 }>()
@@ -193,31 +191,12 @@ function validateAndSubmit() {
             </form>
 
             <!-- Order Summary -->
-            <div class="border border-gray-100 bg-gray-50 p-8 h-fit">
-                <h2 class="text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">
-                    Porudžbina
-                </h2>
-
-                <OrderItemList :items="items" />
-
-                <div class="mt-8 space-y-3 border-t border-gray-200 pt-6">
-                    <div class="flex justify-between text-sm text-gray-600">
-                        <span>Međuzbir</span>
-                        <span>{{ formatPrice(summary.subtotal) }}</span>
-                    </div>
-                    <div class="flex justify-between text-sm text-gray-600">
-                        <span>Dostava</span>
-                        <span>{{ formatPrice(summary.shipping) }}</span>
-                    </div>
-                </div>
-
-                <div class="mt-6 border-t border-gray-200 pt-6">
-                    <div class="flex justify-between text-base font-medium text-gray-900">
-                        <span>Ukupno</span>
-                        <span>{{ formatPrice(summary.total) }}</span>
-                    </div>
-                </div>
-            </div>
+            <OrderSummary
+                :items="items"
+                :subtotal="summary.subtotal"
+                :shipping="500"
+                :total="summary.total"
+            />
         </div>
     </PageContainer>
 </template>

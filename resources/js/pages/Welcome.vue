@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
+import AppImage from '@/components/AppImage.vue'
 import ProductCard from '@/components/ProductCard.vue'
-import { formatPrice } from '@/lib/utils'
 import type { FeaturedProduct, Brand } from '@/types'
 import products from '@/routes/products'
 
 defineOptions({ layout: AppLayout })
 
-const props = defineProps<{
+defineProps<{
     featuredProducts: FeaturedProduct[]
-    brands: Brand[]
+    brands?: Brand[]
 }>()
 
 const categories = [
@@ -31,13 +31,6 @@ const categories = [
     },
 ]
 
-function getOriginalPrice(product: FeaturedProduct): string | undefined {
-    if (product.sale_price && product.price) {
-        return formatPrice(product.price)
-    }
-    return undefined
-}
-
 function submitNewsletter(event: Event) {
     event.preventDefault()
     alert('Newsletter prijava uskoro dostupna.')
@@ -50,9 +43,11 @@ function submitNewsletter(event: Event) {
     <!-- Hero -->
     <section class="relative flex h-[85vh] min-h-[600px] items-center overflow-hidden">
         <div class="absolute inset-0">
-            <img
+            <AppImage
                 src="/assets/img/pexels-suhashanjar-36779954.webp"
                 alt="Luksuzni parfem"
+                sizes="100vw"
+                priority
                 class="h-full w-full object-cover animate-ken-burns"
             />
             <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
@@ -95,8 +90,8 @@ function submitNewsletter(event: Event) {
                     :image="product.image"
                     :brand="product.brand"
                     :name="product.name + (product.size_label ? ' ' + product.size_label : '')"
-                    :price="formatPrice(product.sale_price ?? product.price)"
-                    :original-price="getOriginalPrice(product)"
+                    :price="product.sale_price || product.price"
+                    :original-price="product.sale_price ? product.price : undefined"
                     :href="products.show.url(product.slug)"
                     :badge="product.badge ?? undefined"
                 />
@@ -109,36 +104,43 @@ function submitNewsletter(event: Event) {
         <div class="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-white to-transparent sm:w-32" />
         <div class="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-white to-transparent sm:w-32" />
 
-        <div class="flex overflow-hidden">
-            <div class="flex w-max animate-marquee items-center gap-28 will-change-transform hover:[animation-play-state:paused]">
-                <div
-                    v-for="brand in brands"
-                    :key="brand.name"
-                    class="flex shrink-0 items-center justify-center px-4"
-                >
-                    <img
-                        v-if="brand.logo"
-                        :src="brand.logo"
-                        :alt="brand.name"
-                        class="h-20 max-w-[220px] opacity-60 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0"
-                    />
-                    <span v-else class="font-serif text-xl font-medium text-gray-900">{{ brand.name }}</span>
-                </div>
-                <div
-                    v-for="brand in brands"
-                    :key="`${brand.name}-dup`"
-                    class="flex shrink-0 items-center justify-center px-4"
-                    aria-hidden="true"
-                >
-                    <img
-                        v-if="brand.logo"
-                        :src="brand.logo"
-                        :alt="brand.name"
-                        class="h-20 max-w-[220px] opacity-60 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0"
-                    />
-                    <span v-else class="font-serif text-xl font-medium text-gray-900">{{ brand.name }}</span>
+        <template v-if="brands">
+            <div class="flex overflow-hidden">
+                <div class="flex w-max animate-marquee items-center gap-28 will-change-transform hover:[animation-play-state:paused]">
+                    <div
+                        v-for="brand in brands"
+                        :key="brand.name"
+                        class="flex shrink-0 items-center justify-center px-4"
+                    >
+                        <AppImage
+                            v-if="brand.logo"
+                            :src="brand.logo"
+                            :alt="brand.name"
+                            sizes="220px"
+                            class="h-20 max-w-[220px] opacity-60 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0"
+                        />
+                        <span v-else class="font-serif text-xl font-medium text-gray-900">{{ brand.name }}</span>
+                    </div>
+                    <div
+                        v-for="brand in brands"
+                        :key="`${brand.name}-dup`"
+                        class="flex shrink-0 items-center justify-center px-4"
+                        aria-hidden="true"
+                    >
+                        <AppImage
+                            v-if="brand.logo"
+                            :src="brand.logo"
+                            :alt="brand.name"
+                            sizes="220px"
+                            class="h-20 max-w-[220px] opacity-60 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0"
+                        />
+                        <span v-else class="font-serif text-xl font-medium text-gray-900">{{ brand.name }}</span>
+                    </div>
                 </div>
             </div>
+        </template>
+        <div v-else class="mx-auto flex max-w-4xl items-center justify-center gap-16">
+            <div v-for="i in 4" :key="i" class="h-16 w-36 animate-pulse rounded bg-gray-100" />
         </div>
     </section>
 
@@ -155,9 +157,10 @@ function submitNewsletter(event: Event) {
                     :href="category.href"
                     class="group relative aspect-[4/5] overflow-hidden"
                 >
-                    <img
+                    <AppImage
                         :src="category.image"
                         :alt="category.label"
+                        sizes="(max-width: 768px) 100vw, 33vw"
                         class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                     <div class="absolute inset-0 bg-black/30 transition-colors group-hover:bg-black/40" />
@@ -176,9 +179,10 @@ function submitNewsletter(event: Event) {
         <div class="mx-auto max-w-7xl px-6 py-20 lg:px-8">
             <div class="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
                 <div class="aspect-[4/5] overflow-hidden lg:aspect-auto lg:h-[600px]">
-                    <img
+                    <AppImage
                         src="/assets/img/pexels-isidor-bobinec-94539949-9202888.webp"
                         alt="dndparfems kolekcija"
+                        sizes="(max-width: 1024px) 100vw, 50vw"
                         class="h-full w-full object-cover"
                     />
                 </div>

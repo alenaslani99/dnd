@@ -16,7 +16,7 @@ class ProductController extends Controller
     public function index(Request $request): Response
     {
         $query = Product::query()
-            ->with(['brand', 'images', 'activeVariants.latestPrice', 'activeVariants.currentPromotion'])
+            ->with(['brand', 'primaryImage', 'activeVariants.latestPrice', 'activeVariants.currentPromotion'])
             ->where('is_active', true);
 
         // Multi-brand filter
@@ -42,7 +42,7 @@ class ProductController extends Controller
         }
 
         // Sort
-        $sort = $request->input('sort', 'newest');
+        $sort = $request->input('sort');
         $priceSub = Product::select('amount')
             ->from('prices')
             ->join('product_variants', 'product_variants.id', '=', 'prices.product_variant_id')
@@ -69,6 +69,7 @@ class ProductController extends Controller
 
         return Inertia::render('Products/Index', [
             'products' => $products->through(fn (Product $product) => ProductListResource::make($product)->toArray($request)),
+            'total_count' => (string) $products->total(),
             'filters' => [
                 'brands' => $selectedBrands,
                 'sizes' => $selectedSizes,
@@ -88,7 +89,7 @@ class ProductController extends Controller
     public function show(Request $request, string $slug): Response
     {
         $product = Product::query()
-            ->with(['brand', 'images', 'activeVariants.latestPrice', 'activeVariants.currentPromotion'])
+            ->with(['brand', 'images', 'primaryImage', 'activeVariants.latestPrice', 'activeVariants.currentPromotion'])
             ->where('slug', $slug)
             ->where('is_active', true)
             ->firstOrFail();

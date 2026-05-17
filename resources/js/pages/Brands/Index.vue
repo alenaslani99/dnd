@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
+import AppImage from '@/components/AppImage.vue'
 import PageContainer from '@/components/PageContainer.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
 import type { BrandWithCount } from '@/types'
@@ -28,9 +29,10 @@ defineProps<{
                 v-for="brand in brands"
                 :key="brand.id"
                 :href="productRoutes.index.url({ query: { brands: [brand.slug] } })"
+                prefetch
                 class="group flex flex-col items-center justify-center gap-6 border border-gray-100 bg-white px-8 py-14 transition-all duration-300 hover:border-gray-300 hover:shadow-sm"
             >
-                <img
+                <AppImage
                     v-if="brand.logo"
                     :src="brand.logo"
                     :alt="brand.name"

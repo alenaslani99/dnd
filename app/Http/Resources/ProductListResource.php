@@ -12,14 +12,16 @@ class ProductListResource extends JsonResource
         $variant = $this->activeVariants->first();
         $promotion = $variant?->activePromotion();
 
+        $price = $variant?->currentPrice()?->amount;
+
         return [
             'id' => $this->id,
             'slug' => $this->slug,
             'name' => $this->name,
             'brand' => $this->brand?->name ?? '',
-            'image' => $this->images->first()?->path ?? '/assets/img/pexels-suhashanjar-36779951.webp',
-            'price' => $variant?->currentPrice()?->amount,
-            'sale_price' => $promotion?->sale_price,
+            'image' => $this->primaryImage->path,
+            'price' => $price !== null ? number_format($price, 0, ',', '.').' RSD' : '',
+            'sale_price' => $promotion?->sale_price !== null ? number_format($promotion->sale_price, 0, ',', '.').' RSD' : '',
             'size_label' => $variant?->size_label,
             'badge' => $promotion ? 'Akcija' : null,
         ];

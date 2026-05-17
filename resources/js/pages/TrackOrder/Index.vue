@@ -1,22 +1,24 @@
 <script setup lang="ts">
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3'
+import { Head, useForm, usePage } from '@inertiajs/vue3'
 import { computed } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import BaseInput from '@/components/BaseInput.vue'
-import OrderSummary from '@/components/OrderSummary.vue'
 import PageContainer from '@/components/PageContainer.vue'
 import PrimaryButton from '@/components/PrimaryButton.vue'
 import SectionHeader from '@/components/SectionHeader.vue'
-import type { Order } from '@/types'
+import StatusBadge from '@/components/StatusBadge.vue'
 import trackOrderRoutes from '@/routes/track-order'
 import productRoutes from '@/routes/products'
 
 defineOptions({ layout: AppLayout })
 
 const props = defineProps<{
-    order: Order | null
+    order: {
+        order_number: string
+        status: string
+        created_at: string
+    } | null
     searched: boolean
-    verified_email?: string
 }>()
 
 const page = usePage()
@@ -69,17 +71,20 @@ function submit() {
         </form>
 
         <!-- Order Result -->
-        <OrderSummary
-            v-if="searched && order"
-            class="mt-16"
-            :items="order.items"
-            :shipping="order.shipping_cost"
-            :total="order.total_amount"
-            :order-number="order.order_number"
-            :created-at="order.created_at"
-            :status="order.status"
-            show-metadata
-        />
+        <div v-if="searched && order" class="mt-16 border border-gray-100 bg-gray-50 p-8">
+            <div class="flex items-center justify-between border-b border-gray-200 pb-4">
+                <span class="text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">Broj porudžbine</span>
+                <span class="text-sm font-medium text-gray-900">{{ order.order_number }}</span>
+            </div>
+            <div class="flex items-center justify-between border-b border-gray-200 py-4">
+                <span class="text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">Datum</span>
+                <span class="text-sm text-gray-900">{{ order.created_at }}</span>
+            </div>
+            <div class="flex items-center justify-between pt-4">
+                <span class="text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">Status</span>
+                <StatusBadge :status="order.status" />
+            </div>
+        </div>
 
         <!-- Not Found -->
         <div v-if="searched && !order" class="mt-16 text-center">

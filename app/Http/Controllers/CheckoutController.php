@@ -51,7 +51,6 @@ class CheckoutController extends Controller
             'items' => $items,
             'summary' => [
                 'subtotal' => $subtotal,
-                'shipping' => $shipping,
                 'total' => $subtotal + $shipping,
             ],
         ]);
@@ -122,6 +121,8 @@ class CheckoutController extends Controller
 
             return $order;
         });
+
+        $request->session()->flash('receipt_order_id', $order->id);
 
         return redirect()->route('orders.show', $order->order_number);
     }

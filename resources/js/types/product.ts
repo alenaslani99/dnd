@@ -4,10 +4,10 @@ export type ProductListItem = {
     name: string;
     brand: string;
     image: string;
-    price: number | null;
-    sale_price: number | null;
-    size_label: string | null;
-    badge?: string | null;
+    price: string;
+    sale_price: string;
+    size_label: string;
+    badge?: string;
 };
 
 export type ProductDetail = {
@@ -21,8 +21,8 @@ export type ProductDetail = {
         id: number;
         size_label: string | null;
         sku: string;
-        price: number | null;
-        sale_price: number | null;
+        price: string;
+        sale_price: string;
         is_available: boolean;
     }[];
 };
@@ -39,8 +39,8 @@ export type FeaturedProduct = {
     name: string;
     brand: string;
     image: string;
-    price: number | null;
-    sale_price: number | null;
-    size_label: string | null;
+    price: string;
+    sale_price: string;
+    size_label: string;
     badge: string | null;
 };

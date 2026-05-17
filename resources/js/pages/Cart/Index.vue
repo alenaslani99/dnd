@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3'
+import { ref } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
+import BaseDialog from '@/components/BaseDialog.vue'
 import CartItem from '@/components/CartItem.vue'
 import GhostButton from '@/components/GhostButton.vue'
 import PageContainer from '@/components/PageContainer.vue'
 import PrimaryButton from '@/components/PrimaryButton.vue'
-import { formatPrice } from '@/lib/utils'
+import OrderSummary from '@/components/OrderSummary.vue'
 import type { Cart } from '@/types'
 import productRoutes from '@/routes/products'
 import cartRoutes from '@/routes/cart'
@@ -18,6 +20,7 @@ const props = defineProps<{
 }>()
 
 const updateForm = useForm({ quantity: 1 })
+const itemToRemove = ref<number | null>(null)
 
 function updateQuantity(itemId: number, qty: number) {
     if (qty < 1) return
@@ -26,9 +29,18 @@ function updateQuantity(itemId: number, qty: number) {
 }
 
 function removeItem(itemId: number) {
-    if (confirm('Da li sigurno želiš da ukloniš ovaj proizvod iz korpe?')) {
-        updateForm.delete(cartRoutes.destroy.url(itemId), { preserveScroll: true })
+    itemToRemove.value = itemId
+}
+
+function confirmRemove() {
+    if (itemToRemove.value !== null) {
+        updateForm.delete(cartRoutes.destroy.url(itemToRemove.value), { preserveScroll: true })
     }
+    itemToRemove.value = null
+}
+
+function cancelRemove() {
+    itemToRemove.value = null
 }
 </script>
 
@@ -53,34 +65,25 @@ function removeItem(itemId: number) {
             </div>
 
             <!-- Summary -->
-            <div class="border border-gray-100 bg-gray-50 p-6 sm:p-8">
-                <h2 class="text-xs font-medium tracking-[0.15em] text-gray-500 uppercase">
-                    Pregled
-                </h2>
-
-                <div class="mt-6 space-y-3">
-                    <div class="flex justify-between text-sm text-gray-600">
-                        <span>Ukupno</span>
-                        <span>{{ formatPrice(cart.total) }}</span>
-                    </div>
-                    <div class="flex justify-between text-sm text-gray-600">
-                        <span>Dostava</span>
-                        <span>{{ formatPrice(cart.shipping_cost) }}</span>
-                    </div>
-                </div>
-
-                <div class="mt-6 border-t border-gray-200 pt-6">
-                    <div class="flex justify-between text-base font-medium text-gray-900">
-                        <span>Ukupno</span>
-                        <span>{{ formatPrice((cart.total ?? 0) + cart.shipping_cost) }}</span>
-                    </div>
-                </div>
+            <div class="space-y-8">
+                <OrderSummary
+                    :items="cart.items.map(item => ({
+                        product_name: item.product.name,
+                        brand_name: item.product.brand,
+                        size_label: item.variant.size_label,
+                        quantity: item.quantity,
+                        unit_price: item.unit_price ?? 0,
+                        total_price: item.total_price ?? 0,
+                    }))"
+                    :subtotal="cart.total ?? 0"
+                    :shipping="cart.shipping_cost"
+                    :total="(cart.total ?? 0) + cart.shipping_cost"
+                />
 
                 <PrimaryButton
                     as="link"
                     variant="full"
                     :href="checkoutRoutes.create.url()"
-                    class="mt-8"
                 >
                     Checkout
                 </PrimaryButton>
@@ -88,7 +91,6 @@ function removeItem(itemId: number) {
                 <GhostButton
                     as="link"
                     :href="productRoutes.index.url()"
-                    class="mt-4"
                 >
                     Nastavi kupovinu
                 </GhostButton>
@@ -108,4 +110,16 @@ function removeItem(itemId: number) {
             </PrimaryButton>
         </div>
     </PageContainer>
+
+    <BaseDialog
+        :open="itemToRemove !== null"
+        title="Ukloni iz korpe"
+        message="Da li sigurno želiš da ukloniš ovaj proizvod iz korpe?"
+        confirm-label="Ukloni"
+        cancel-label="Otkaži"
+        icon="alert"
+        @confirm="confirmRemove"
+        @cancel="cancelRemove"
+        @close="cancelRemove"
+    />
 </template>

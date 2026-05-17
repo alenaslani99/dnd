@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { formatPrice } from '@/lib/utils'
-
 interface Props {
-    price: number | null
-    salePrice?: number | null
+    price: string
+    salePrice?: string
     size?: 'default' | 'small'
 }
 
@@ -24,7 +22,7 @@ const sizeClasses = {
             class="font-medium text-red-600"
             :class="sizeClasses[size]"
         >
-            {{ formatPrice(salePrice) }}
+            {{ salePrice }}
         </p>
         <p
             class="font-medium"
@@ -33,7 +31,7 @@ const sizeClasses = {
                 salePrice ? 'text-gray-400 line-through text-base sm:text-lg' : 'text-gray-900',
             ]"
         >
-            {{ formatPrice(price) }}
+            {{ price }}
         </p>
     </div>
 </template>

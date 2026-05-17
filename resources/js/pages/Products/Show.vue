@@ -2,6 +2,7 @@
 import { Head, useForm } from '@inertiajs/vue3'
 import { ref, computed } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
+import AppImage from '@/components/AppImage.vue'
 import PageContainer from '@/components/PageContainer.vue'
 import PriceDisplay from '@/components/PriceDisplay.vue'
 import PrimaryButton from '@/components/PrimaryButton.vue'
@@ -63,9 +64,11 @@ function addToCart() {
             <!-- Images -->
             <div class="space-y-3 sm:space-y-4">
                 <div class="aspect-[3/4] overflow-hidden bg-gray-100">
-                    <img
+                    <AppImage
                         :src="activeImage"
                         :alt="product.name"
+                        sizes="(max-width: 1024px) 100vw, 50vw"
+                        priority
                         class="h-full w-full object-cover"
                     />
                 </div>
@@ -80,9 +83,10 @@ function addToCart() {
                         class="aspect-square h-16 shrink-0 overflow-hidden border-2 transition-colors sm:h-20"
                         :class="activeImage === image.path ? 'border-gray-900' : 'border-transparent'"
                     >
-                        <img
+                        <AppImage
                             :src="image.path"
                             :alt="image.alt ?? product.name"
+                            sizes="80px"
                             class="h-full w-full object-cover"
                         />
                     </button>
