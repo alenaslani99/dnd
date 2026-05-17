@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\BrandController;
@@ -51,4 +54,12 @@ Route::middleware(['guest', 'throttle:auth'])->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('logout', [LoginController::class, 'destroy'])->name('logout');
     Route::get('profile', [ProfileController::class, 'show'])->name('profile');
+});
+
+Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('proizvodi', [AdminProductController::class, 'index'])->name('admin.products.index');
+    Route::get('porudzbine', [AdminOrderController::class, 'index'])->name('admin.orders.index');
+    Route::get('porudzbine/{orderNumber}', [AdminOrderController::class, 'show'])->name('admin.orders.show');
+    Route::patch('porudzbine/{orderNumber}/status', [AdminOrderController::class, 'updateStatus'])->name('admin.orders.update-status');
 });

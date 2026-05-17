@@ -57,8 +57,8 @@ defineProps<{
         <OrderSummary
             class="mt-14"
             :items="order.items"
-            :shipping="order.shipping_cost"
-            :total="order.total_amount"
+            :shipping="Number(order.shipping_cost)"
+            :total="Number(order.total_amount)"
             :order-number="order.order_number"
             :created-at="order.created_at"
             :status="order.status"
