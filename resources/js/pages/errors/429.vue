@@ -5,7 +5,9 @@ import { home } from '@/routes'
 </script>
 
 <template>
-    <Head title="Previše zahteva" />
+    <Head title="Previše zahteva — dndparfems">
+        <meta name="robots" content="noindex" />
+    </Head>
 
     <div class="flex min-h-screen flex-col items-center justify-center bg-white px-6">
         <p class="text-xs font-medium tracking-[0.3em] text-gray-400 uppercase">

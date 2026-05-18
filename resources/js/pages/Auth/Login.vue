@@ -21,7 +21,9 @@ function submit() {
 </script>
 
 <template>
-    <Head title="Prijava" />
+    <Head title="Prijava — dndparfems">
+        <meta name="description" content="Prijavi se na dndparfems i nastavi sa kupovinom luksuznih parfema." />
+    </Head>
 
     <AuthLayout
         title="Prijava"

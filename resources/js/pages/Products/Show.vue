@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3'
+import { Head, useForm, usePage } from '@inertiajs/vue3'
 import { ref, computed } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import AppImage from '@/components/AppImage.vue'
@@ -25,6 +25,113 @@ const activeVariant = computed(() => {
 })
 
 const activeImage = ref(props.product.images.find(img => img.is_primary)?.path ?? props.product.images[0]?.path)
+
+const productDescription = computed(() => {
+    return props.product.description.length > 160
+        ? props.product.description.substring(0, 157).trimEnd() + '...'
+        : props.product.description
+})
+
+const schemaString = computed(() => {
+    const schema: Record<string, unknown> = {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: props.product.name,
+        description: props.product.description,
+        brand: {
+            '@type': 'Brand',
+            name: props.product.brand,
+        },
+    }
+
+    const primaryImage = props.product.images.find(img => img.is_primary) ?? props.product.images[0]
+    if (primaryImage) {
+        schema.image = primaryImage.path
+    }
+
+    const offers = props.product.variants
+        .filter(v => v.is_available)
+        .map(variant => {
+            const priceRaw = variant.sale_price || variant.price || ''
+            const priceNum = parseFloat(priceRaw.replace(/[^\d,]/g, '').replace(',', '.'))
+
+            const offer: Record<string, unknown> = {
+                '@type': 'Offer',
+                url: productRoutes.show.url(props.product.slug),
+                priceCurrency: 'RSD',
+                price: isNaN(priceNum) ? 0 : priceNum,
+                availability: variant.is_available ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+                itemCondition: 'https://schema.org/NewCondition',
+            }
+
+            if (variant.sku) {
+                offer.sku = variant.sku
+            }
+
+            if (variant.size_label) {
+                offer.name = variant.size_label
+            }
+
+            return offer
+        })
+
+    if (offers.length > 0) {
+        schema.offers = offers.length === 1 ? offers[0] : offers
+    }
+
+    return JSON.stringify(schema)
+})
+
+const faqSchemaString = computed(() => {
+    const questions = [
+        {
+            '@type': 'Question',
+            name: 'Da li je parfem ' + props.product.name + ' originalan?',
+            acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Da, svi proizvodi na dndparfems su 100% originalni. Uvozimo ih isključivo od ovlašćenih distributera i brendova.',
+            },
+        },
+        {
+            '@type': 'Question',
+            name: 'Koja je razlika između EDT i EDP kod ovog parfema?',
+            acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'EDT (Eau de Toilette) ima 5-15% mirisnog ulja i traje 3-5 sati. EDP (Eau de Parfum) ima 15-20% mirisnog ulja i traje 6-8 sati. EDP ima intenzivniji miris i dužu postojanost.',
+            },
+        },
+        {
+            '@type': 'Question',
+            name: 'Koji su dostupni formati (veličine) za ' + props.product.name + '?',
+            acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Dostupne veličine su: ' + props.product.variants.map(v => v.size_label).filter(Boolean).join(', ') + '. Na lageru su samo navedene varijante.',
+            },
+        },
+        {
+            '@type': 'Question',
+            name: 'Koliko košta dostava za parfem?',
+            acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Dostava za celu Srbiju iznosi 500 RSD. Besplatna je za porudžbine preko 5.000 RSD. Isporuka traje 2-5 radnih dana.',
+            },
+        },
+        {
+            '@type': 'Question',
+            name: 'Kako mogu da platim?',
+            acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Plaćanje se vrši pouzećem (pouzeće) prilikom preuzimanja pošiljke. Plaćate u gotovini kuriru prilikom dostave.',
+            },
+        },
+    ]
+
+    return JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: questions,
+    })
+})
 
 function hasPromotion(variant: ProductDetail['variants'][0]): boolean {
     return !!variant.sale_price
@@ -57,7 +164,12 @@ function addToCart() {
 </script>
 
 <template>
-    <Head :title="product.name" />
+    <Head :title="`${product.name} — dndparfems`">
+        <meta name="description" :content="productDescription" />
+    </Head>
+
+    <component :is="'script'" type="application/ld+json" :key="`${product.slug}-product`" v-text="schemaString" />
+    <component :is="'script'" type="application/ld+json" :key="`${product.slug}-faq`" v-text="faqSchemaString" />
 
     <PageContainer padding="product">
         <div class="grid grid-cols-1 gap-6 sm:gap-12 lg:grid-cols-2 lg:gap-20">

@@ -88,11 +88,13 @@ function validateAndSubmit() {
 </script>
 
 <template>
-    <Head title="Checkout" />
+    <Head title="Kasa — dndparfems">
+        <meta name="description" content="Završi kupovinu na dndparfems. Brza dostava širom Srbije. Plaćanje pouzećem." />
+    </Head>
 
     <PageContainer>
         <h1 class="mb-12 text-center font-serif text-4xl font-medium tracking-wide text-gray-900">
-            Checkout
+            Kasa
         </h1>
 
         <div class="grid grid-cols-1 gap-12 lg:grid-cols-2">

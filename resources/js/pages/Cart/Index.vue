@@ -45,7 +45,9 @@ function cancelRemove() {
 </script>
 
 <template>
-    <Head title="Korpa" />
+    <Head title="Korpa — dndparfems">
+        <meta name="description" content="Pregledaj i uredi svoju korpu pre nego što nastaviš sa kupovinom na dndparfems." />
+    </Head>
 
     <PageContainer>
         <h1 class="mb-12 text-center font-serif text-4xl font-medium tracking-wide text-gray-900">

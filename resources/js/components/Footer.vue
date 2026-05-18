@@ -8,7 +8,7 @@ import trackOrder from '@/routes/track-order'
 <template>
     <footer class="border-t border-gray-100 bg-gray-50">
         <div class="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-            <div class="grid grid-cols-1 gap-10 md:grid-cols-3">
+            <div class="grid grid-cols-1 gap-10 md:grid-cols-4">
                 <div>
                     <Link href="/" class="font-sans text-lg font-semibold tracking-[0.25em] text-gray-900 uppercase">
                         dndparfems
@@ -37,6 +37,54 @@ import trackOrder from '@/routes/track-order'
                                 class="text-sm text-gray-500 transition-colors hover:text-gray-900"
                             >
                                 Prati porudžbinu
+                            </Link>
+                        </li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-sm font-semibold tracking-wide text-gray-900 uppercase">
+                        Informacije
+                    </h3>
+                    <ul class="mt-4 flex flex-col gap-2">
+                        <li>
+                            <Link
+                                href="/vodic/odabir-parfema"
+                                class="text-sm text-gray-500 transition-colors hover:text-gray-900"
+                            >
+                                Vodič za odabir parfema
+                            </Link>
+                        </li>
+                        <li>
+                            <Link
+                                href="/vodic/mirisne-note"
+                                class="text-sm text-gray-500 transition-colors hover:text-gray-900"
+                            >
+                                Mirisne note
+                            </Link>
+                        </li>
+                        <li>
+                            <Link
+                                href="/vodic/edt-vs-edp"
+                                class="text-sm text-gray-500 transition-colors hover:text-gray-900"
+                            >
+                                EDT vs EDP
+                            </Link>
+                        </li>
+                        <li>
+                            <Link
+                                href="/privatnost"
+                                class="text-sm text-gray-500 transition-colors hover:text-gray-900"
+                            >
+                                Politika privatnosti
+                            </Link>
+                        </li>
+                        <li>
+                            <Link
+                                href="/uslovi-koriscenja"
+                                class="text-sm text-gray-500 transition-colors hover:text-gray-900"
+                            >
+                                Uslovi korišćenja
                             </Link>
                         </li>
                     </ul>

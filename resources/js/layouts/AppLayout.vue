@@ -3,6 +3,7 @@ import Navigation from '@/components/Navigation.vue'
 import Footer from '@/components/Footer.vue'
 import PageLoader from '@/components/PageLoader.vue'
 import FlashToast from '@/components/FlashToast.vue'
+import CookieConsent from '@/components/CookieConsent.vue'
 </script>
 
 <template>
@@ -16,5 +17,6 @@ import FlashToast from '@/components/FlashToast.vue'
         </main>
 
         <Footer />
+        <CookieConsent />
     </div>
 </template>

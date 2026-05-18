@@ -38,7 +38,12 @@ function submitNewsletter(event: Event) {
 </script>
 
 <template>
-    <Head title="Početna" />
+    <Head title="dndparfems — Luksuzni parfemi | Kupi parfeme online">
+        <meta
+            name="description"
+            content="Otkrij svet luksuznih parfema na dndparfems. Pažljivo odabrana kolekcija muških, ženskih i uniseks mirisa uz brzu dostavu. Pronađi svoj potpisni miris danas."
+        />
+    </Head>
 
     <!-- Hero -->
     <section class="relative flex h-[85vh] min-h-[600px] items-center overflow-hidden">
@@ -81,7 +86,7 @@ function submitNewsletter(event: Event) {
     <section class="bg-gray-50">
         <div class="mx-auto max-w-7xl px-6 py-24 lg:px-8">
             <h2 class="mb-12 text-center font-serif text-3xl font-medium tracking-wide text-gray-900 lg:text-4xl">
-                Istaknuti proizvodi
+                Istaknuti parfemi
             </h2>
             <div class="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4">
                 <ProductCard
@@ -148,7 +153,7 @@ function submitNewsletter(event: Event) {
     <section class="bg-gray-50">
         <div class="mx-auto max-w-7xl px-6 py-24 lg:px-8">
             <h2 class="mb-12 text-center font-serif text-3xl font-medium tracking-wide text-gray-900 lg:text-4xl">
-                Kupuj po kategoriji
+                Kupuj parfeme po kategoriji
             </h2>
             <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
                 <a

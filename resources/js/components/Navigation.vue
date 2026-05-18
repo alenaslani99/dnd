@@ -14,6 +14,7 @@ const dropdownTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 
 const page = usePage()
 const authUser = computed(() => page.props.auth?.user as { name: string; email: string } | null)
+const cartItemCount = computed(() => (page.props.cartCount as number) ?? 0)
 
 // Search state
 const searchQuery = ref('')
@@ -297,10 +298,16 @@ onUnmounted(() => {
 
                 <Link
                     :href="cart.index.url()"
-                    class="text-gray-500 transition-colors hover:text-gray-900"
+                    class="relative text-gray-500 transition-colors hover:text-gray-900"
                     aria-label="Korpa"
                 >
                     <Icon name="cart" :size="20" />
+                    <span
+                        v-if="cartItemCount > 0"
+                        class="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gray-900 px-1 text-[10px] font-semibold text-white"
+                    >
+                        {{ cartItemCount > 99 ? '99+' : cartItemCount }}
+                    </span>
                 </Link>
             </div>
 

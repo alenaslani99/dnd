@@ -10,6 +10,7 @@ const mobileMenuOpen = defineModel<boolean>({ required: true })
 
 const page = usePage()
 const authUser = computed(() => page.props.auth?.user as { name: string; email: string } | null)
+const cartItemCount = computed(() => (page.props.cartCount as number) ?? 0)
 
 function isActive(href: string): boolean {
     if (href === '#') return false
@@ -100,11 +101,19 @@ function close() {
                 </Link>
                 <Link
                     :href="cart.index.url()"
-                    class="flex flex-col items-center gap-2 text-white/60 transition-colors hover:text-white"
+                    class="relative flex flex-col items-center gap-2 text-white/60 transition-colors hover:text-white"
                     aria-label="Korpa"
                     @click="close"
                 >
-                    <Icon name="cart" :size="24" />
+                    <span class="relative">
+                        <Icon name="cart" :size="24" />
+                        <span
+                            v-if="cartItemCount > 0"
+                            class="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[10px] font-semibold text-gray-900"
+                        >
+                            {{ cartItemCount > 99 ? '99+' : cartItemCount }}
+                        </span>
+                    </span>
                     <span class="text-[10px] font-medium tracking-[0.2em] uppercase">Korpa</span>
                 </Link>
             </div>

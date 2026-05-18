@@ -15,7 +15,9 @@ defineProps<{
 </script>
 
 <template>
-    <Head title="Profil" />
+    <Head title="Profil — dndparfems">
+        <meta name="description" content="Tvoj profil na dndparfems. Pregledaj i uredi svoje lične podatke." />
+    </Head>
 
     <PageContainer max-width="narrow">
         <h1 class="mb-12 text-center font-serif text-4xl font-medium tracking-wide text-gray-900">

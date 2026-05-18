@@ -34,10 +34,53 @@ function submit() {
         preserveScroll: true,
     })
 }
+
+const faqSchemaString = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+        {
+            '@type': 'Question',
+            name: 'Kako mogu da pratim svoju porudžbinu?',
+            acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Unesite broj porudžbine i email adresu koju ste koristili prilikom kupovine u formu iznad. Nakon toga će vam biti prikazan trenutni status porudžbine.',
+            },
+        },
+        {
+            '@type': 'Question',
+            name: 'Gde mogu da nađem broj porudžbine?',
+            acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Broj porudžbine se nalazi u emailu koji ste dobili nakon uspešne kupovine. Takođe je prikazan na stranici sa potvrdom porudžbine.',
+            },
+        },
+        {
+            '@type': 'Question',
+            name: 'Koliko dugo traje isporuka?',
+            acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Isporuka traje 2-5 radnih dana za celu teritoriju Srbije. Dostavu vršimo putem kurirske službe.',
+            },
+        },
+        {
+            '@type': 'Question',
+            name: 'Šta ako moja porudžbina kasni?',
+            acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Ako porudžbina ne stigne u roku od 5 radnih dana, kontaktirajte nas na info@dndparfems.rs i proverićemo status isporuke.',
+            },
+        },
+    ],
+})
 </script>
 
 <template>
-    <Head title="Prati porudžbinu" />
+    <Head title="Prati porudžbinu — dndparfems">
+        <meta name="description" content="Prati status svoje porudžbine na dndparfems. Unesi broj porudžbine i email adresu za brzu proveru." />
+    </Head>
+
+    <component :is="'script'" type="application/ld+json" v-text="faqSchemaString" />
 
     <PageContainer max-width="narrow">
         <SectionHeader

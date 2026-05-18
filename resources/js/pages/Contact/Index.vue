@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3'
+import { computed } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import BaseInput from '@/components/BaseInput.vue'
 import PageContainer from '@/components/PageContainer.vue'
@@ -22,10 +23,53 @@ function submit() {
         preserveScroll: true,
     })
 }
+
+const faqSchemaString = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+        {
+            '@type': 'Question',
+            name: 'Kako mogu da kontaktiram dndparfems?',
+            acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Možete nas kontaktirati putem emaila na info@dndparfems.rs, telefonom na +381 11 123 4567, ili putem kontakt forme na ovoj stranici.',
+            },
+        },
+        {
+            '@type': 'Question',
+            name: 'Koje je radno vreme prodavnice?',
+            acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Radno vreme je ponedeljkom do petkom od 09:00 do 20:00, subotom od 10:00 do 16:00. Nedeljom ne radimo.',
+            },
+        },
+        {
+            '@type': 'Question',
+            name: 'Gde se nalazite?',
+            acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Nalazimo se u Beogradu, Srbija. Vršimo dostavu putem kurirske službe na celoj teritoriji Republike Srbije.',
+            },
+        },
+        {
+            '@type': 'Question',
+            name: 'Kako mogu da vratim proizvod?',
+            acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Imate pravo na povraćaj u roku od 14 dana od dana prijema pošiljke. Proizvod mora biti neoštećen i u originalnom pakovanju. Kontaktirajte nas putem emaila za više informacija.',
+            },
+        },
+    ],
+})
 </script>
 
 <template>
-    <Head title="Kontakt" />
+    <Head title="Kontakt — dndparfems">
+        <meta name="description" content="Kontaktiraj dndparfems. Piši nam na info@dndparfems.rs, pozovi +381 11 123 4567 ili nas poseti u Beogradu." />
+    </Head>
+
+    <component :is="'script'" type="application/ld+json" v-text="faqSchemaString" />
 
     <PageContainer>
         <SectionHeader

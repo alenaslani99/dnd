@@ -5,7 +5,9 @@ import { home } from '@/routes'
 </script>
 
 <template>
-    <Head title="Stranica nije pronađena" />
+    <Head title="Stranica nije pronađena — dndparfems">
+        <meta name="description" content="Stranica koju tražite ne postoji. Vratite se na početnu stranu dndparfems." />
+    </Head>
 
     <div class="flex min-h-screen flex-col items-center justify-center bg-white px-6">
         <p class="text-xs font-medium tracking-[0.3em] text-gray-400 uppercase">

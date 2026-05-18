@@ -8,6 +8,7 @@ use App\Models\Brand;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -68,6 +69,9 @@ class ProductController extends Controller
             ->orderBy('size_label')
             ->pluck('size_label');
 
+        $hasActiveFilters = ! empty($selectedBrands) || ! empty($selectedSizes) || ! empty($selectedGenders);
+        $hasPagination = $products->currentPage() > 1;
+
         return Inertia::render('Products/Index', [
             'products' => $products->through(fn (Product $product) => ProductListResource::make($product)->toArray($request)),
             'total_count' => (string) $products->total(),
@@ -77,13 +81,15 @@ class ProductController extends Controller
                 'genders' => $selectedGenders,
                 'sort' => $sort,
             ],
-            'brands' => Brand::orderBy('name')->get(['id', 'name', 'slug']),
+            'brands' => Cache::remember('product_listing.brands', 86400, fn () => Brand::orderBy('name')->get(['id', 'name', 'slug'])->toArray(),
+            ),
             'sizes' => $sizes,
             'genders' => [
                 ['value' => 'male', 'label' => 'Muški'],
                 ['value' => 'female', 'label' => 'Ženski'],
                 ['value' => 'unisex', 'label' => 'Uniseks'],
             ],
+            'shouldNoindex' => $hasActiveFilters || $hasPagination,
         ]);
     }
 

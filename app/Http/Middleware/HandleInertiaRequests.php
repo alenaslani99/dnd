@@ -2,7 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Actions\GetOrCreateCart;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -41,6 +43,14 @@ class HandleInertiaRequests extends Middleware
             $data = parent::share($request);
         }
 
+        $cacheKey = 'cart_count.'.($request->user()?->id ?? $request->session()->getId());
+
+        $cartCount = Cache::remember($cacheKey, 300, function () {
+            $cart = app(GetOrCreateCart::class)->find();
+
+            return $cart?->items()->count() ?? 0;
+        });
+
         return [
             ...$data,
             'name' => config('app.name'),
@@ -51,6 +61,7 @@ class HandleInertiaRequests extends Middleware
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
             ] : [],
+            'cartCount' => $cartCount,
         ];
     }
 }

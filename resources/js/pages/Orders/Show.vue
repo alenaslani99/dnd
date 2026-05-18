@@ -16,7 +16,9 @@ defineProps<{
 </script>
 
 <template>
-    <Head :title="`Porudžbina ${order.order_number}`" />
+    <Head :title="`Porudžbina ${order.order_number} — dndparfems`">
+        <meta name="description" content="Detalji porudžbine na dndparfems. Pregledaj stavke, količine i status svoje porudžbine." />
+    </Head>
 
     <PageContainer max-width="narrow">
         <div class="text-center">

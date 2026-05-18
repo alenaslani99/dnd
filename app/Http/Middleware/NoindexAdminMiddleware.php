@@ -6,16 +6,16 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class AdminMiddleware
+class NoindexAdminMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $user = $request->user();
+        $response = $next($request);
 
-        if (! $user || ! $user->isAdmin()) {
-            abort(403, 'Pristup dozvoljen samo administratorima.');
+        if ($response instanceof Response) {
+            $response->headers->set('X-Robots-Tag', 'noindex, nofollow');
         }
 
-        return $next($request);
+        return $response;
     }
 }

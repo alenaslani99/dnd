@@ -24,6 +24,7 @@ const props = defineProps<{
     brands: Brand[]
     sizes: string[]
     genders: { value: string; label: string }[]
+    shouldNoindex?: boolean
 }>()
 
 const showFilters = ref(false)
@@ -103,7 +104,10 @@ const sortOptions = [
 </script>
 
 <template>
-    <Head title="Parfemi" />
+    <Head title="Parfemi — dndparfems">
+        <meta name="description" content="Kupi luksuzne parfeme online | dndparfems. Pažljivo odabrana kolekcija muških, ženskih i uniseks mirisa." />
+        <meta v-if="shouldNoindex" name="robots" content="noindex, follow" />
+    </Head>
 
     <PageContainer>
         <SectionHeader

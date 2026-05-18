@@ -23,7 +23,9 @@ function submit() {
 </script>
 
 <template>
-    <Head title="Registracija" />
+    <Head title="Registracija — dndparfems">
+        <meta name="description" content="Kreiraj nalog na dndparfems i otkrij svet luksuznih parfema uz ekskluzivne pogodnosti." />
+    </Head>
 
     <AuthLayout
         title="Registracija"

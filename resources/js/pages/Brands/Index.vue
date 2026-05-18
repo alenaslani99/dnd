@@ -15,7 +15,9 @@ defineProps<{
 </script>
 
 <template>
-    <Head title="Brendovi" />
+    <Head title="Brendovi — dndparfems">
+        <meta name="description" content="Otkrij sve brendove luksuznih parfema u našoj kolekciji. Chanel, Dior, Versace, Dolce & Gabbana i mnogi drugi." />
+    </Head>
 
     <PageContainer>
         <SectionHeader
@@ -29,7 +31,6 @@ defineProps<{
                 v-for="brand in brands"
                 :key="brand.id"
                 :href="productRoutes.index.url({ query: { brands: [brand.slug] } })"
-                prefetch
                 class="group flex flex-col items-center justify-center gap-6 border border-gray-100 bg-white px-8 py-14 transition-all duration-300 hover:border-gray-300 hover:shadow-sm"
             >
                 <AppImage
