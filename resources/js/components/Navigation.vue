@@ -4,6 +4,7 @@ import { computed, onUnmounted, ref, watch } from 'vue'
 import { navLinks } from '@/config/nav'
 import { home, login, logout } from '@/routes'
 import cart from '@/routes/cart'
+import productRoutes from '@/routes/products'
 import Icon from '@/components/Icon.vue'
 import MobileMenu from '@/components/MobileMenu.vue'
 
@@ -13,6 +14,14 @@ const dropdownTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 
 const page = usePage()
 const authUser = computed(() => page.props.auth?.user as { name: string; email: string } | null)
+
+// Search state
+const searchQuery = ref('')
+const searchResults = ref<{ id: number; name: string; slug: string; brand: string; image: string | null; price: string }[]>([])
+const searchLoading = ref(false)
+const searchOpen = ref(false)
+let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
+let searchBlurTimer: ReturnType<typeof setTimeout> | null = null
 
 function isActive(href: string): boolean {
     if (href === '#') {
@@ -41,6 +50,73 @@ function closeDropdown() {
     }, 150)
 }
 
+function performSearch() {
+    const query = searchQuery.value.trim()
+
+    if (query.length < 3) {
+        searchResults.value = []
+        searchOpen.value = false
+        return
+    }
+
+    searchLoading.value = true
+    searchOpen.value = true
+
+    fetch(`/pretraga?q=${encodeURIComponent(query)}`, {
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+    })
+        .then(res => res.json())
+        .then((data) => {
+            searchResults.value = data
+            searchOpen.value = true
+        })
+        .catch(() => {
+            searchResults.value = []
+        })
+        .finally(() => {
+            searchLoading.value = false
+        })
+}
+
+function onSearchInput() {
+    if (searchDebounceTimer) {
+        clearTimeout(searchDebounceTimer)
+    }
+
+    const query = searchQuery.value.trim()
+    if (query.length < 3) {
+        searchResults.value = []
+        searchOpen.value = false
+        return
+    }
+
+    searchDebounceTimer = setTimeout(() => {
+        performSearch()
+    }, 350)
+}
+
+function onSearchFocus() {
+    if (searchBlurTimer) {
+        clearTimeout(searchBlurTimer)
+        searchBlurTimer = null
+    }
+    if (searchQuery.value.trim().length >= 3 && searchResults.value.length > 0) {
+        searchOpen.value = true
+    }
+}
+
+function onSearchBlur() {
+    searchBlurTimer = setTimeout(() => {
+        searchOpen.value = false
+    }, 200)
+}
+
+function clearSearch() {
+    searchQuery.value = ''
+    searchResults.value = []
+    searchOpen.value = false
+}
+
 watch(mobileMenuOpen, (open) => {
     if (open) {
         document.body.style.overflow = 'hidden'
@@ -51,6 +127,8 @@ watch(mobileMenuOpen, (open) => {
 
 onUnmounted(() => {
     if (dropdownTimer.value) clearTimeout(dropdownTimer.value)
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer)
+    if (searchBlurTimer) clearTimeout(searchBlurTimer)
     document.body.style.overflow = ''
 })
 </script>
@@ -93,9 +171,99 @@ onUnmounted(() => {
             </div>
 
             <div class="hidden items-center gap-6 md:flex">
-                <button type="button" class="text-gray-500 transition-colors hover:text-gray-900" aria-label="Pretraga">
-                    <Icon name="search" :size="20" />
-                </button>
+                <!-- Search -->
+                <div class="relative">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                            <Icon name="search" :size="16" />
+                        </div>
+                        <input
+                            v-model="searchQuery"
+                            type="text"
+                            placeholder="Pretraži parfeme..."
+                            class="h-9 w-48 rounded-full border border-gray-200 bg-white pl-9 pr-8 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:w-64 focus:border-gray-900"
+                            @input="onSearchInput"
+                            @focus="onSearchFocus"
+                            @blur="onSearchBlur"
+                        />
+                        <button
+                            v-if="searchQuery"
+                            type="button"
+                            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 transition-colors hover:text-gray-600"
+                            @mousedown.prevent="clearSearch"
+                        >
+                            <Icon name="close" :size="14" />
+                        </button>
+                    </div>
+
+                    <!-- Search Dropdown -->
+                    <Transition
+                        enter-active-class="transition-all duration-200 ease-out"
+                        enter-from-class="opacity-0 -translate-y-1"
+                        enter-to-class="opacity-100 translate-y-0"
+                        leave-active-class="transition-all duration-150 ease-in"
+                        leave-from-class="opacity-100 translate-y-0"
+                        leave-to-class="opacity-0 -translate-y-1"
+                    >
+                        <div
+                            v-if="searchOpen"
+                            class="absolute right-0 top-full mt-2 w-80 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl"
+                            @mousedown.prevent
+                        >
+                            <div v-if="searchLoading" class="py-6 text-center">
+                                <div class="mx-auto h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-gray-900" />
+                            </div>
+
+                            <div v-else-if="searchResults.length === 0" class="py-5 text-center">
+                                <p class="text-sm text-gray-400">Nema rezultata.</p>
+                            </div>
+
+                            <div v-else class="divide-y divide-gray-100">
+                                <Link
+                                    v-for="product in searchResults"
+                                    :key="product.id"
+                                    :href="productRoutes.show.url(product.slug)"
+                                    class="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-gray-50"
+                                    @click="clearSearch"
+                                >
+                                    <div class="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-gray-100">
+                                        <img
+                                            v-if="product.image"
+                                            :src="product.image"
+                                            :alt="product.name"
+                                            class="h-full w-full object-cover"
+                                            loading="lazy"
+                                        />
+                                        <div v-else class="flex h-full w-full items-center justify-center text-xs text-gray-400">
+                                            Nema
+                                        </div>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="truncate text-sm font-medium text-gray-900">
+                                            {{ product.name }}
+                                        </p>
+                                        <p class="truncate text-xs text-gray-500">
+                                            {{ product.brand }}
+                                        </p>
+                                        <p class="mt-0.5 text-xs font-semibold text-gray-900">
+                                            {{ product.price }}
+                                        </p>
+                                    </div>
+                                </Link>
+                            </div>
+
+                            <div class="border-t border-gray-100 bg-gray-50 px-4 py-2">
+                                <Link
+                                    :href="productRoutes.index.url({ query: { search: searchQuery } })"
+                                    class="block text-center text-xs font-medium text-gray-500 transition-colors hover:text-gray-900"
+                                    @click="clearSearch"
+                                >
+                                    Pogledaj sve rezultate →
+                                </Link>
+                            </div>
+                        </div>
+                    </Transition>
+                </div>
 
                 <Link
                     v-if="!authUser"

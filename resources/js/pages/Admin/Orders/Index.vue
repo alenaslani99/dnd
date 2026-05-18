@@ -3,7 +3,8 @@ import { Head, Link, router } from '@inertiajs/vue3'
 import { ref, watch } from 'vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import Icon from '@/components/Icon.vue'
-import { orders as adminOrdersRoute } from '@/routes/admin'
+import adminOrdersRoute from '@/routes/admin/orders'
+import { useDragScroll } from '@/composables/useDragScroll'
 import { statusLabel } from '@/lib/utils'
 
 defineOptions({ layout: AdminLayout })
@@ -35,6 +36,7 @@ const props = defineProps<{
 
 const search = ref(props.filters.search ?? '')
 const selectedStatus = ref(props.filters.status ?? '')
+const dragScroll = useDragScroll()
 
 watch(search, () => {
     router.get(adminOrdersRoute.index.url(), {
@@ -76,8 +78,8 @@ function statusColor(status: string): string {
 
     <div class="space-y-6">
         <!-- Header -->
-        <div class="flex items-center justify-between">
-            <h1 class="font-serif text-3xl font-medium tracking-wide text-gray-900">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <h1 class="font-serif text-2xl font-medium tracking-wide text-gray-900 lg:text-3xl">
                 Porudžbine
             </h1>
             <span class="text-sm text-gray-500">
@@ -123,56 +125,65 @@ function statusColor(status: string): string {
 
         <!-- Table -->
         <div class="overflow-hidden rounded-md border border-gray-200 bg-white">
-            <table class="w-full text-left text-sm">
-                <thead class="bg-gray-50 text-xs font-semibold tracking-[0.1em] text-gray-500 uppercase">
-                    <tr>
-                        <th class="px-6 py-4">Broj porudžbine</th>
-                        <th class="px-6 py-4">Kupac</th>
-                        <th class="px-6 py-4">Email</th>
-                        <th class="px-6 py-4">Ukupno</th>
-                        <th class="px-6 py-4">Status</th>
-                        <th class="px-6 py-4">Stavki</th>
-                        <th class="px-6 py-4">Datum</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    <tr
-                        v-for="order in orders.data"
-                        :key="order.id"
-                        class="transition-colors hover:bg-gray-50"
-                    >
-                        <td class="px-6 py-4">
-                            <Link
-                                :href="adminOrdersRoute.show.url(order.order_number)"
-                                class="font-medium text-gray-900 underline-offset-4 hover:underline"
-                            >
-                                #{{ order.order_number }}
-                            </Link>
-                        </td>
-                        <td class="px-6 py-4 text-gray-600">{{ order.customer_name }}</td>
-                        <td class="px-6 py-4 text-gray-600">{{ order.customer_email }}</td>
-                        <td class="px-6 py-4 font-medium text-gray-900">
-                            {{ new Intl.NumberFormat('sr-RS').format(order.total_amount) }} RSD
-                        </td>
-                        <td class="px-6 py-4">
-                            <span
-                                :class="[
-                                    'inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium',
-                                    statusColor(order.status),
-                                ]"
-                            >
-                                {{ statusLabel(order.status) }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-gray-600">{{ order.items_count }}</td>
-                        <td class="px-6 py-4 text-gray-500">{{ order.created_at }}</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div
+                ref="dragScroll.el"
+                class="overflow-x-auto cursor-grab"
+                @mousedown="dragScroll.onMouseDown"
+                @mouseleave="dragScroll.onMouseLeave"
+                @mouseup="dragScroll.onMouseUp"
+                @mousemove="dragScroll.onMouseMove"
+            >
+                <table class="w-full min-w-[56rem] text-left text-sm">
+                    <thead class="bg-gray-50 text-xs font-semibold tracking-[0.1em] text-gray-500 uppercase">
+                        <tr>
+                            <th class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4">Broj</th>
+                            <th class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4">Kupac</th>
+                            <th class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4">Email</th>
+                            <th class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4">Ukupno</th>
+                            <th class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4">Status</th>
+                            <th class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4">Stavki</th>
+                            <th class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4">Datum</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <tr
+                            v-for="order in orders.data"
+                            :key="order.id"
+                            class="transition-colors hover:bg-gray-50"
+                        >
+                            <td class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4">
+                                <Link
+                                    :href="adminOrdersRoute.show.url(order.order_number)"
+                                    class="font-medium text-gray-900 underline-offset-4 hover:underline"
+                                >
+                                    #{{ order.order_number }}
+                                </Link>
+                            </td>
+                            <td class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4 text-gray-600">{{ order.customer_name }}</td>
+                            <td class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4 text-gray-600">{{ order.customer_email }}</td>
+                            <td class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4 font-medium text-gray-900">
+                                {{ new Intl.NumberFormat('sr-RS').format(order.total_amount) }} RSD
+                            </td>
+                            <td class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4">
+                                <span
+                                    :class="[
+                                        'inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium',
+                                        statusColor(order.status),
+                                    ]"
+                                >
+                                    {{ statusLabel(order.status) }}
+                                </span>
+                            </td>
+                            <td class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4 text-gray-600">{{ order.items_count }}</td>
+                            <td class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4 text-gray-500">{{ order.created_at }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Pagination -->
-        <div v-if="orders.last_page > 1" class="flex items-center justify-between">
+        <div v-if="orders.last_page > 1" class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p class="text-sm text-gray-500">
                 Strana {{ orders.current_page }} od {{ orders.last_page }}
             </p>

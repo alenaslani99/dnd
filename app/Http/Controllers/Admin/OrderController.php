@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -94,7 +95,7 @@ class OrderController extends Controller
                     'unit_price' => $item->unit_price,
                     'total_price' => $item->unit_price * $item->quantity,
                 ]),
-                'next_status' => $this->nextStatus($order->status),
+                'next_status' => $this->nextStatus($order->status)?->value,
             ],
         ]);
     }
@@ -105,10 +106,23 @@ class OrderController extends Controller
 
         $next = $this->nextStatus($order->status);
         if ($next === null) {
+            Log::warning('Order status update failed: no next status', [
+                'order_number' => $orderNumber,
+                'current_status' => $order->status->value,
+            ]);
+
             return back()->with('error', 'Status ne može biti promenjen.');
         }
 
-        $order->update(['status' => $next]);
+        $updated = $order->update(['status' => $next]);
+
+        Log::info('Order status updated', [
+            'order_number' => $orderNumber,
+            'current_status' => $order->status->value,
+            'next_status' => $next->value,
+            'update_result' => $updated,
+            'order_fillable' => $order->getFillable(),
+        ]);
 
         return back()->with('success', 'Status porudžbine je ažuriran.');
     }

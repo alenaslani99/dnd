@@ -3,7 +3,8 @@ import { Head, Link, router } from '@inertiajs/vue3'
 import { ref, watch } from 'vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import Icon from '@/components/Icon.vue'
-import { products as adminProductsRoute } from '@/routes/admin'
+import adminProductsRoute from '@/routes/admin/products'
+import { useDragScroll } from '@/composables/useDragScroll'
 
 defineOptions({ layout: AdminLayout })
 
@@ -33,6 +34,9 @@ const props = defineProps<{
 
 const search = ref(props.filters.search ?? '')
 const selectedSort = ref(props.filters.sort ?? 'newest')
+const productToDelete = ref<{ id: number; name: string } | null>(null)
+const isDeleting = ref(false)
+const dragScroll = useDragScroll()
 
 watch(search, () => {
     router.get(adminProductsRoute.index.url(), {
@@ -76,6 +80,27 @@ function genderLabel(gender: string): string {
     }
     return map[gender] ?? gender
 }
+
+function openDeleteModal(product: { id: number; name: string }): void {
+    productToDelete.value = product
+}
+
+function closeDeleteModal(): void {
+    productToDelete.value = null
+}
+
+function confirmDelete(): void {
+    if (!productToDelete.value) {
+        return
+    }
+    isDeleting.value = true
+    router.delete(adminProductsRoute.destroy.url(productToDelete.value.id), {
+        onFinish: () => {
+            isDeleting.value = false
+            closeDeleteModal()
+        },
+    })
+}
 </script>
 
 <template>
@@ -83,8 +108,8 @@ function genderLabel(gender: string): string {
 
     <div class="space-y-6">
         <!-- Header -->
-        <div class="flex items-center justify-between">
-            <h1 class="font-serif text-3xl font-medium tracking-wide text-gray-900">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <h1 class="font-serif text-2xl font-medium tracking-wide text-gray-900 lg:text-3xl">
                 Proizvodi
             </h1>
             <span class="text-sm text-gray-500">
@@ -129,51 +154,80 @@ function genderLabel(gender: string): string {
 
         <!-- Table -->
         <div class="overflow-hidden rounded-md border border-gray-200 bg-white">
-            <table class="w-full text-left text-sm">
-                <thead class="bg-gray-50 text-xs font-semibold tracking-[0.1em] text-gray-500 uppercase">
-                    <tr>
-                        <th class="px-6 py-4">ID</th>
-                        <th class="px-6 py-4">Naziv</th>
-                        <th class="px-6 py-4">Brend</th>
-                        <th class="px-6 py-4">Tip</th>
-                        <th class="px-6 py-4">Pol</th>
-                        <th class="px-6 py-4">Cena</th>
-                        <th class="px-6 py-4">Varijante</th>
-                        <th class="px-6 py-4">Status</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    <tr
-                        v-for="product in products.data"
-                        :key="product.id"
-                        class="transition-colors hover:bg-gray-50"
-                    >
-                        <td class="px-6 py-4 text-gray-500">#{{ product.id }}</td>
-                        <td class="px-6 py-4 font-medium text-gray-900">{{ product.name }}</td>
-                        <td class="px-6 py-4 text-gray-600">{{ product.brand }}</td>
-                        <td class="px-6 py-4 text-gray-600">{{ typeLabel(product.type) }}</td>
-                        <td class="px-6 py-4 text-gray-600">{{ genderLabel(product.gender) }}</td>
-                        <td class="px-6 py-4 text-gray-900">{{ product.price }}</td>
-                        <td class="px-6 py-4 text-gray-600">{{ product.variants_count }}</td>
-                        <td class="px-6 py-4">
-                            <span
-                                :class="[
-                                    'inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium',
-                                    product.is_active
-                                        ? 'bg-green-50 text-green-700'
-                                        : 'bg-gray-100 text-gray-600',
-                                ]"
-                            >
-                                {{ product.is_active ? 'Aktivan' : 'Neaktivan' }}
-                            </span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <div
+                ref="dragScroll.el"
+                class="overflow-x-auto cursor-grab"
+                @mousedown="dragScroll.onMouseDown"
+                @mouseleave="dragScroll.onMouseLeave"
+                @mouseup="dragScroll.onMouseUp"
+                @mousemove="dragScroll.onMouseMove"
+            >
+                <table class="w-full min-w-[52rem] text-left text-sm">
+                    <thead class="bg-gray-50 text-xs font-semibold tracking-[0.1em] text-gray-500 uppercase">
+                        <tr>
+                            <th class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4">ID</th>
+                            <th class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4">Naziv</th>
+                            <th class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4">Brend</th>
+                            <th class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4">Tip</th>
+                            <th class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4">Pol</th>
+                            <th class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4">Cena</th>
+                            <th class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4">Varijante</th>
+                            <th class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4">Status</th>
+                            <th class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4 text-right">Akcije</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <tr
+                            v-for="product in products.data"
+                            :key="product.id"
+                            class="transition-colors hover:bg-gray-50"
+                        >
+                            <td class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4 text-gray-500">#{{ product.id }}</td>
+                            <td class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4 font-medium text-gray-900">{{ product.name }}</td>
+                            <td class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4 text-gray-600">{{ product.brand }}</td>
+                            <td class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4 text-gray-600">{{ typeLabel(product.type) }}</td>
+                            <td class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4 text-gray-600">{{ genderLabel(product.gender) }}</td>
+                            <td class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4 text-gray-900">{{ product.price }}</td>
+                            <td class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4 text-gray-600">{{ product.variants_count }}</td>
+                            <td class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4">
+                                <span
+                                    :class="[
+                                        'inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium',
+                                        product.is_active
+                                            ? 'bg-green-50 text-green-700'
+                                            : 'bg-gray-100 text-gray-600',
+                                    ]"
+                                >
+                                    {{ product.is_active ? 'Aktivan' : 'Neaktivan' }}
+                                </span>
+                            </td>
+                            <td class="whitespace-nowrap px-4 py-3 lg:px-6 lg:py-4">
+                                <div class="flex items-center justify-end gap-2">
+                                    <button
+                                        type="button"
+                                        class="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                                        title="Izmeni"
+                                    >
+                                        <Icon name="edit" :size="16" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                                        title="Obriši"
+                                        @click="openDeleteModal(product)"
+                                    >
+                                        <Icon name="trash" :size="16" />
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Pagination -->
-        <div v-if="products.last_page > 1" class="flex items-center justify-between">
+        <div v-if="products.last_page > 1" class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p class="text-sm text-gray-500">
                 Strana {{ products.current_page }} od {{ products.last_page }}
             </p>
@@ -202,4 +256,51 @@ function genderLabel(gender: string): string {
             <p class="text-lg text-gray-400">Nema proizvoda koji odgovaraju pretrazi.</p>
         </div>
     </div>
+
+    <!-- Delete Modal -->
+    <Transition
+        enter-active-class="transition-opacity duration-200"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition-opacity duration-150"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+    >
+        <div
+            v-if="productToDelete"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+            @click.self="closeDeleteModal"
+        >
+            <div class="w-full max-w-sm rounded-lg border border-gray-200 bg-white p-6 shadow-xl">
+                <div class="mb-4 flex items-center gap-3 text-red-600">
+                    <Icon name="trash" :size="24" />
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        Obrisati proizvod?
+                    </h3>
+                </div>
+                <p class="mb-6 text-sm text-gray-600">
+                    Da li ste sigurni da želite da obrišete proizvod
+                    <strong class="text-gray-900">"{{ productToDelete.name }}"</strong>?
+                    Proizvod će biti arhiviran, a porudžbine ostaju netaknute.
+                </p>
+                <div class="flex justify-end gap-3">
+                    <button
+                        type="button"
+                        class="rounded-md border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-900 hover:text-gray-900"
+                        @click="closeDeleteModal"
+                    >
+                        Odustani
+                    </button>
+                    <button
+                        type="button"
+                        :disabled="isDeleting"
+                        class="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                        @click="confirmDelete"
+                    >
+                        {{ isDeleting ? 'Brisanje...' : 'Obriši' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </Transition>
 </template>

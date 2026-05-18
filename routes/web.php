@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\BrandController as AdminBrandController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\MessageController as AdminMessageController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Auth\LoginController;
@@ -22,6 +24,7 @@ Route::get('brendovi', [BrandController::class, 'index'])->name('brands.index');
 
 Route::get('parfemi', [ProductController::class, 'index'])->name('products.index');
 Route::get('parfemi/{slug}', [ProductController::class, 'show'])->name('products.show');
+Route::get('pretraga', [ProductController::class, 'search'])->name('products.search');
 
 Route::middleware('throttle:cart')->group(function () {
     Route::get('korpa', [CartController::class, 'index'])->name('cart.index');
@@ -59,6 +62,11 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('proizvodi', [AdminProductController::class, 'index'])->name('admin.products.index');
+    Route::delete('proizvodi/{product}', [AdminProductController::class, 'destroy'])->name('admin.products.destroy');
+    Route::get('brendovi', [AdminBrandController::class, 'index'])->name('admin.brands.index');
+    Route::post('brendovi', [AdminBrandController::class, 'store'])->name('admin.brands.store');
+    Route::get('poruke', [AdminMessageController::class, 'index'])->name('admin.messages.index');
+    Route::patch('poruke/{message}/read', [AdminMessageController::class, 'markAsRead'])->name('admin.messages.read');
     Route::get('porudzbine', [AdminOrderController::class, 'index'])->name('admin.orders.index');
     Route::get('porudzbine/{orderNumber}', [AdminOrderController::class, 'show'])->name('admin.orders.show');
     Route::patch('porudzbine/{orderNumber}/status', [AdminOrderController::class, 'updateStatus'])->name('admin.orders.update-status');

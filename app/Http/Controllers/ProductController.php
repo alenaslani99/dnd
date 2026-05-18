@@ -6,6 +6,7 @@ use App\Http\Resources\ProductDetailResource;
 use App\Http\Resources\ProductListResource;
 use App\Models\Brand;
 use App\Models\Product;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -97,5 +98,39 @@ class ProductController extends Controller
         return Inertia::render('Products/Show', [
             'product' => ProductDetailResource::make($product)->toArray($request),
         ]);
+    }
+
+    public function search(Request $request): JsonResponse
+    {
+        $query = $request->input('q', '');
+
+        if (strlen($query) < 3) {
+            return response()->json([]);
+        }
+
+        $products = Product::query()
+            ->with(['brand', 'primaryImage', 'activeVariants.latestPrice'])
+            ->where('is_active', true)
+            ->where(function ($q) use ($query) {
+                $q->where('name', 'like', '%'.$query.'%')
+                    ->orWhereHas('brand', function ($bq) use ($query) {
+                        $bq->where('name', 'like', '%'.$query.'%');
+                    });
+            })
+            ->limit(5)
+            ->get();
+
+        return response()->json(
+            $products->map(fn (Product $product) => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'slug' => $product->slug,
+                'brand' => $product->brand?->name ?? '',
+                'image' => $product->primaryImage?->path,
+                'price' => $product->activeVariants->first()?->latestPrice?->amount
+                    ? number_format($product->activeVariants->first()->latestPrice->amount, 0, ',', '.').' RSD'
+                    : '',
+            ])
+        );
     }
 }

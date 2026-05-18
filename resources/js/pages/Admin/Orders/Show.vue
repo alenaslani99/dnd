@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/layouts/AdminLayout.vue'
+import FlashToast from '@/components/FlashToast.vue'
 import Icon from '@/components/Icon.vue'
-import { orders as adminOrdersRoute } from '@/routes/admin'
+import adminOrdersRoute from '@/routes/admin/orders'
 import { statusLabel, formatPrice } from '@/lib/utils'
 
 defineOptions({ layout: AdminLayout })
@@ -57,14 +58,24 @@ function statusColor(status: string): string {
     return map[status] ?? 'bg-gray-100 text-gray-600'
 }
 
-function nextStatusLabel(status: string | null): string {
+function nextStatusButtonClass(status: string | null): string {
     if (!status) return ''
-    return statusLabel(status)
+    const map: Record<string, string> = {
+        pending: 'bg-yellow-500 hover:bg-yellow-600',
+        processing: 'bg-blue-600 hover:bg-blue-700',
+        shipped: 'bg-purple-600 hover:bg-purple-700',
+        delivered: 'bg-green-600 hover:bg-green-700',
+        cancelled: 'bg-gray-600 hover:bg-gray-700',
+        refunded: 'bg-red-600 hover:bg-red-700',
+    }
+    return map[status] ?? 'bg-gray-900 hover:bg-gray-800'
 }
 </script>
 
 <template>
     <Head :title="`Porudžbina #${order.order_number}`" />
+
+    <FlashToast />
 
     <div class="space-y-8">
         <!-- Breadcrumb -->
@@ -80,9 +91,9 @@ function nextStatusLabel(status: string | null): string {
         </div>
 
         <!-- Header -->
-        <div class="flex items-center justify-between">
-            <div class="flex items-center gap-4">
-                <h1 class="font-serif text-3xl font-medium tracking-wide text-gray-900">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex flex-wrap items-center gap-3">
+                <h1 class="font-serif text-2xl font-medium tracking-wide text-gray-900 lg:text-3xl">
                     Porudžbina #{{ order.order_number }}
                 </h1>
                 <span
@@ -99,10 +110,11 @@ function nextStatusLabel(status: string | null): string {
                 v-if="order.next_status"
                 type="button"
                 :disabled="form.processing"
-                class="rounded-md bg-gray-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+                class="rounded-md px-5 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                :class="nextStatusButtonClass(order.next_status)"
                 @click="advanceStatus"
             >
-                {{ form.processing ? 'Ažuriranje...' : `Promeni u: ${nextStatusLabel(order.next_status)}` }}
+                {{ form.processing ? 'Ažuriranje...' : statusLabel(order.next_status) }}
             </button>
         </div>
 
@@ -110,37 +122,39 @@ function nextStatusLabel(status: string | null): string {
             <!-- Items -->
             <div class="lg:col-span-2 space-y-6">
                 <div class="overflow-hidden rounded-md border border-gray-200 bg-white">
-                    <div class="border-b border-gray-100 bg-gray-50 px-6 py-4">
+                    <div class="border-b border-gray-100 bg-gray-50 px-4 py-3 lg:px-6 lg:py-4">
                         <h2 class="text-sm font-semibold tracking-[0.1em] text-gray-900 uppercase">
                             Stavke
                         </h2>
                     </div>
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-gray-50 text-xs font-semibold tracking-[0.1em] text-gray-500 uppercase">
-                            <tr>
-                                <th class="px-6 py-3">Proizvod</th>
-                                <th class="px-6 py-3">Brend</th>
-                                <th class="px-6 py-3">Veličina</th>
-                                <th class="px-6 py-3">Količina</th>
-                                <th class="px-6 py-3 text-right">Cena</th>
-                                <th class="px-6 py-3 text-right">Ukupno</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            <tr
-                                v-for="item in order.items"
-                                :key="item.product_name + item.size_label"
-                                class="hover:bg-gray-50"
-                            >
-                                <td class="px-6 py-4 font-medium text-gray-900">{{ item.product_name }}</td>
-                                <td class="px-6 py-4 text-gray-600">{{ item.brand_name }}</td>
-                                <td class="px-6 py-4 text-gray-600">{{ item.size_label }}</td>
-                                <td class="px-6 py-4 text-gray-600">{{ item.quantity }}</td>
-                                <td class="px-6 py-4 text-right text-gray-600">{{ formatPrice(item.unit_price) }}</td>
-                                <td class="px-6 py-4 text-right font-medium text-gray-900">{{ formatPrice(item.total_price) }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[40rem] text-left text-sm">
+                            <thead class="bg-gray-50 text-xs font-semibold tracking-[0.1em] text-gray-500 uppercase">
+                                <tr>
+                                    <th class="whitespace-nowrap px-4 py-3 lg:px-6">Proizvod</th>
+                                    <th class="whitespace-nowrap px-4 py-3 lg:px-6">Brend</th>
+                                    <th class="whitespace-nowrap px-4 py-3 lg:px-6">Veličina</th>
+                                    <th class="whitespace-nowrap px-4 py-3 lg:px-6">Količina</th>
+                                    <th class="whitespace-nowrap px-4 py-3 lg:px-6 text-right">Cena</th>
+                                    <th class="whitespace-nowrap px-4 py-3 lg:px-6 text-right">Ukupno</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                <tr
+                                    v-for="item in order.items"
+                                    :key="item.product_name + item.size_label"
+                                    class="hover:bg-gray-50"
+                                >
+                                    <td class="whitespace-nowrap px-4 py-3 lg:px-6 font-medium text-gray-900">{{ item.product_name }}</td>
+                                    <td class="whitespace-nowrap px-4 py-3 lg:px-6 text-gray-600">{{ item.brand_name }}</td>
+                                    <td class="whitespace-nowrap px-4 py-3 lg:px-6 text-gray-600">{{ item.size_label }}</td>
+                                    <td class="whitespace-nowrap px-4 py-3 lg:px-6 text-gray-600">{{ item.quantity }}</td>
+                                    <td class="whitespace-nowrap px-4 py-3 lg:px-6 text-right text-gray-600">{{ formatPrice(item.unit_price) }}</td>
+                                    <td class="whitespace-nowrap px-4 py-3 lg:px-6 text-right font-medium text-gray-900">{{ formatPrice(item.total_price) }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 

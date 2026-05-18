@@ -36,14 +36,12 @@ class Product extends Model
     {
         static::deleting(function (Product $product) {
             if (! $product->isForceDeleting()) {
-                $product->variants()->delete();
-                $product->images()->delete();
+                $product->variants()->update(['is_active' => false]);
             }
         });
 
         static::restoring(function (Product $product) {
-            $product->variants()->restore();
-            $product->images()->restore();
+            $product->variants()->withTrashed()->update(['is_active' => true]);
         });
     }
 
