@@ -4,7 +4,9 @@ import AppLayout from '@/layouts/AppLayout.vue'
 import AppImage from '@/components/AppImage.vue'
 import ProductCard from '@/components/ProductCard.vue'
 import type { FeaturedProduct, Brand } from '@/types'
+import { useForm } from '@inertiajs/vue3'
 import products from '@/routes/products'
+import newsletter from '@/routes/newsletter'
 
 defineOptions({ layout: AppLayout })
 
@@ -12,6 +14,15 @@ defineProps<{
     featuredProducts: FeaturedProduct[]
     brands?: Brand[]
 }>()
+
+const form = useForm({ email: '' })
+
+function submit() {
+    form.post(newsletter.store.url(), {
+        preserveScroll: true,
+        onSuccess: () => form.reset(),
+    })
+}
 
 const categories = [
     {
@@ -30,11 +41,6 @@ const categories = [
         href: products.index.url({ query: { genders: ['unisex'] } }),
     },
 ]
-
-function submitNewsletter(event: Event) {
-    event.preventDefault()
-    alert('Newsletter prijava uskoro dostupna.')
-}
 </script>
 
 <template>
@@ -223,17 +229,25 @@ function submitNewsletter(event: Event) {
             <p class="mt-4 text-base leading-relaxed text-gray-500">
                 Prvi saznaj za nove mirise, ekskluzivne kolekcije i specijalne ponude.
             </p>
-            <form class="mt-8 flex flex-col gap-4 sm:flex-row" @submit.prevent="submitNewsletter">
-                <input
-                    type="email"
-                    placeholder="Tvoja email adresa"
-                    class="flex-1 border-b border-gray-300 bg-transparent px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-gray-900"
-                />
+            <form class="mt-8 flex flex-col gap-4 sm:flex-row" @submit.prevent="submit">
+                <div class="flex-1">
+                    <input
+                        v-model="form.email"
+                        type="email"
+                        placeholder="Tvoja email adresa"
+                        class="w-full border-b bg-transparent px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition-colors focus:border-gray-900"
+                        :class="form.errors.email ? 'border-red-500' : 'border-gray-300'"
+                    />
+                    <p v-if="form.errors.email" class="mt-2 text-left text-xs text-red-500">
+                        {{ form.errors.email }}
+                    </p>
+                </div>
                 <button
                     type="submit"
-                    class="border border-gray-900 bg-gray-900 px-8 py-3 text-sm font-medium tracking-widest text-white uppercase transition-all hover:bg-white hover:text-gray-900"
+                    :disabled="form.processing"
+                    class="border border-gray-900 bg-gray-900 px-8 py-3 text-sm font-medium tracking-widest text-white uppercase transition-all hover:bg-white hover:text-gray-900 disabled:opacity-50"
                 >
-                    Prijavi se
+                    {{ form.processing ? 'Slanje...' : 'Prijavi se' }}
                 </button>
             </form>
             <p class="mt-4 text-xs text-gray-400">

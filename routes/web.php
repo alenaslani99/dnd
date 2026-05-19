@@ -11,6 +11,7 @@ use App\Http\Controllers\BrandController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
@@ -75,6 +76,10 @@ Route::post('prati-porudzbinu', [TrackOrderController::class, 'store'])->name('t
 
 Route::get('kontakt', [ContactController::class, 'create'])->name('contact.create');
 Route::post('kontakt', [ContactController::class, 'store'])->middleware('throttle:contact')->name('contact.store');
+
+Route::post('prijava-na-novosti', [NewsletterController::class, 'store'])
+    ->middleware('throttle:newsletter')
+    ->name('newsletter.store');
 
 Route::middleware(['guest', 'throttle:auth'])->group(function () {
     Route::get('login', [LoginController::class, 'create'])->name('login');
